@@ -3,133 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML 網頁分類管理器 (GitHub版)</title>
+    <title>AI應用教學網頁管理V.1.1</title>
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 FontAwesome 圖示 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- 引入 JSZip 用於全部打包下載 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <!-- 設定溫馨風自訂顏色 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        warm: {
+                            50: '#fff8f0',
+                            100: '#ffe8d6',
+                            200: '#ffd1a9',
+                            300: '#ffb575',
+                            400: '#ff9540',
+                            500: '#ff770e',
+                            600: '#ea5f00',
+                            700: '#c24800',
+                            800: '#9a3a08',
+                            900: '#7d320b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        ::-webkit-scrollbar-track { background: #fff8f0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #ffd1a9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ffb575; }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         /* 載入中遮罩 */
         #loader { display: none; }
         body.loading #loader { display: flex; }
+        /* 全螢幕時的 iframe 樣式 */
+        #preview-frame:fullscreen { background-color: #fff8f0; width: 100vw; height: 100vh; }
         
-        /* 全螢幕時的 iframe 樣式確保填滿 */
-        #preview-frame:fullscreen { background-color: white; width: 100vw; height: 100vh; }
+        /* 超出兩行顯示刪節號 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
+<body class="bg-warm-50 text-warm-900 font-sans h-screen flex overflow-hidden selection:bg-warm-200">
 
     <!-- 全局載入中遮罩 -->
-    <div id="loader" class="fixed inset-0 bg-white bg-opacity-80 z-[999] flex-col items-center justify-center fade-in">
-        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4"></i>
-        <p class="text-lg font-bold text-gray-700 mt-4" id="loader-text">與 Google Drive 同步中...</p>
+    <div id="loader" class="fixed inset-0 bg-white bg-opacity-90 z-[999] flex-col items-center justify-center fade-in">
+        <i class="fa-solid fa-mug-hot fa-bounce text-6xl text-warm-500 mb-4"></i>
+        <p class="text-xl font-bold text-warm-800 mt-4 tracking-wider" id="loader-text">與 Google Drive 同步中...</p>
     </div>
 
-    <!-- 左側分類導覽列 -->
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-10">
-        <div class="p-5 border-b border-gray-200 flex items-center space-x-3">
-            <div class="bg-gray-800 text-white p-2 rounded-lg">
-                <i class="fa-brands fa-github"></i>
+    <!-- 左側分類導覽列 (溫馨風) -->
+    <aside class="w-64 bg-white border-r border-warm-100 flex flex-col shadow-sm z-10">
+        <div class="p-6 border-b border-warm-100 flex items-center space-x-3 bg-warm-100/50">
+            <div class="bg-warm-500 text-white p-2.5 rounded-xl shadow-inner">
+                <i class="fa-brands fa-github text-lg"></i>
             </div>
-            <h1 class="text-xl font-bold text-gray-700">雲端網頁管理</h1>
+            <h1 class="text-xl font-bold text-warm-800 tracking-wide leading-tight">AI應用教學網頁<br><span class="text-base font-medium text-warm-600">(簡單版本) V.1.1</span></h1>
         </div>
-        <div class="p-4 flex-1 overflow-y-auto" id="category-list">
+        <div class="p-4 flex-1 overflow-y-auto space-y-1" id="category-list">
             <!-- 分類列表 -->
         </div>
-        <div class="p-4 border-t border-gray-200 space-y-3">
-            <div>
-                <label class="block text-xs font-bold text-gray-500 mb-1">綁定資料夾 ID</label>
-                <input type="text" id="folder-id" value="155vRl7rDF-acfHXo0vbkDRt-ZQhQRNqO" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500" title="可更換其他資料夾 ID">
-            </div>
-            <button onclick="syncDrive()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-rotate"></i>
-                <span>從雲端重新載入</span>
-            </button>
-            <button onclick="openModal('add')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow flex items-center justify-center space-x-2">
+        
+        <!-- 左下角操作按鈕區 -->
+        <div class="p-5 border-t border-warm-100 space-y-3 bg-warm-50/50">
+            <button onclick="openModal('add')" class="w-full bg-warm-500 hover:bg-warm-600 text-white font-bold py-2.5 px-4 rounded-2xl transition duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transform hover:-translate-y-0.5">
                 <i class="fa-solid fa-plus"></i>
                 <span>新增雲端網頁</span>
+            </button>
+            <button onclick="syncDrive()" class="w-full bg-white hover:bg-warm-50 text-warm-600 border border-warm-200 font-semibold py-2 px-4 rounded-xl transition duration-300 shadow-sm flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-rotate"></i>
+                <span>重新整理</span>
+            </button>
+            <button onclick="downloadAllZip()" class="w-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold py-2 px-4 rounded-xl transition duration-300 shadow-sm flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-file-zipper text-stone-500"></i>
+                <span>打包下載全部</span>
+            </button>
+            <button onclick="openSettings()" class="w-full text-warm-400 hover:text-warm-600 font-medium py-1 px-4 text-sm transition flex items-center justify-center mt-2">
+                <i class="fa-solid fa-gear mr-1"></i> 基本設定
             </button>
         </div>
     </aside>
 
     <!-- 右側主要內容區 -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden">
-        <header class="bg-white p-5 border-b border-gray-200 shadow-sm flex justify-between items-center z-0">
-            <h2 class="text-2xl font-bold text-gray-800" id="current-category-title">全部網頁</h2>
-            <div class="text-sm text-gray-500" id="file-count">共 0 個檔案</div>
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- 溫馨裝飾背景球 -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-warm-100 opacity-50 blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-1/2 w-96 h-96 rounded-full bg-amber-50 opacity-50 blur-3xl pointer-events-none"></div>
+
+        <header class="bg-white/80 backdrop-blur-md p-6 border-b border-warm-100 shadow-sm flex justify-between items-end z-0">
+            <div>
+                <h2 class="text-3xl font-extrabold text-warm-800" id="current-category-title">全部網頁</h2>
+                <div class="text-sm text-warm-500 mt-1 font-medium" id="file-count">共 0 個作品</div>
+            </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <div class="flex-1 overflow-y-auto p-8 z-0">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="files-container">
             </div>
         </div>
     </main>
 
-    <!-- 新增/修改 Modal -->
-    <div id="file-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center"><i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-2"></i> <span id="modal-title">新增網頁</span></h3>
-                <button onclick="closeModal('file-modal')" class="text-gray-500 hover:text-red-500 transition">
+    <!-- 新增/修改 Modal (圓潤風格) -->
+    <div id="file-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden items-center justify-center z-50 fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden border border-warm-100">
+            <div class="p-6 border-b border-warm-100 flex justify-between items-center bg-warm-50/50">
+                <h3 class="text-2xl font-bold text-warm-800 flex items-center"><i class="fa-solid fa-pen-nib text-warm-500 mr-3"></i> <span id="modal-title">新增網頁</span></h3>
+                <button onclick="closeModal('file-modal')" class="text-warm-400 hover:text-red-500 transition p-2 bg-white rounded-full hover:shadow-sm">
                     <i class="fa-solid fa-times text-xl"></i>
                 </button>
             </div>
-            <div class="p-6 flex-1 overflow-y-auto">
-                <form id="file-form" class="space-y-4">
+            <div class="p-8 flex-1 overflow-y-auto">
+                <form id="file-form" class="space-y-5">
                     <input type="hidden" id="file-id">
-                    <div class="grid grid-cols-3 gap-4">
+                    
+                    <div class="grid grid-cols-3 gap-5">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">類別</label>
-                            <input type="text" id="file-category" required class="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-sm font-bold text-warm-700 mb-1.5">類別標籤</label>
+                            <input type="text" id="file-category" placeholder="例如：遊戲" required class="w-full bg-warm-50 border border-warm-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-warm-400 focus:bg-white transition">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">網頁名稱</label>
-                            <input type="text" id="file-name" required class="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-sm font-bold text-warm-700 mb-1.5">網頁名稱</label>
+                            <input type="text" id="file-name" placeholder="例如：貪吃蛇" required class="w-full bg-warm-50 border border-warm-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-warm-400 focus:bg-white transition">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">開發者</label>
-                            <input type="text" id="file-developer" required class="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-sm font-bold text-warm-700 mb-1.5">開發者姓名</label>
+                            <input type="text" id="file-developer" placeholder="例如：王小明" required class="w-full bg-warm-50 border border-warm-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-warm-400 focus:bg-white transition">
                         </div>
                     </div>
-                    <div class="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                        雲端檔名預覽：<strong id="preview-filename" class="text-blue-700">類別-網頁名稱-開發者.html</strong>
-                    </div>
+
+                    <!-- 新增：網頁說明欄位 -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">HTML 程式碼</label>
-                        <textarea id="file-content" required rows="15" class="w-full border border-gray-300 rounded p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        <label class="block text-sm font-bold text-warm-700 mb-1.5">網頁相關說明</label>
+                        <textarea id="file-description" rows="2" placeholder="請簡單描述這個網頁的功能或用途，方便日後查看..." class="w-full bg-warm-50 border border-warm-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-warm-400 focus:bg-white transition resize-none"></textarea>
+                    </div>
+                    
+                    <div class="text-sm text-warm-600 bg-warm-100/50 p-3 rounded-xl flex items-center">
+                        <i class="fa-solid fa-cloud text-warm-400 mr-2"></i>
+                        雲端存檔名稱：<strong id="preview-filename" class="text-warm-800 ml-1">類別-網頁名稱-開發者.html</strong>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-warm-700 mb-1.5">HTML 程式碼</label>
+                        <textarea id="file-content" required rows="12" placeholder="請在此貼上 HTML 程式碼..." class="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 font-mono text-sm outline-none focus:ring-2 focus:ring-warm-400 focus:bg-white transition"></textarea>
                     </div>
                 </form>
             </div>
-            <div class="p-5 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
-                <button onclick="closeModal('file-modal')" class="px-5 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">取消</button>
-                <button id="save-btn" onclick="saveFile()" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">儲存至雲端</button>
+            <div class="p-6 border-t border-warm-100 bg-warm-50/50 flex justify-end space-x-4">
+                <button onclick="closeModal('file-modal')" class="px-6 py-2.5 text-stone-600 bg-white border border-stone-200 rounded-xl hover:bg-stone-50 transition font-medium">取消</button>
+                <button id="save-btn" onclick="saveFile()" class="px-6 py-2.5 text-white bg-warm-500 rounded-xl hover:bg-warm-600 transition font-bold shadow-md hover:shadow-lg transform hover:-translate-y-0.5">儲存至雲端</button>
             </div>
         </div>
     </div>
 
     <!-- 執行/預覽 Modal -->
-    <div id="preview-modal" class="fixed inset-0 bg-gray-900 bg-opacity-90 hidden flex-col z-[60] fade-in">
-        <div class="flex justify-between items-center p-4 bg-gray-800 text-white">
+    <div id="preview-modal" class="fixed inset-0 bg-stone-900/90 hidden flex-col z-[60] fade-in backdrop-blur-sm">
+        <div class="flex justify-between items-center p-4 bg-stone-900 text-warm-50 border-b border-stone-800 shadow-lg">
             <h3 class="text-lg font-bold flex items-center truncate max-w-lg">
-                <i class="fa-solid fa-play text-green-400 mr-2"></i> 
-                <span id="preview-title">預覽</span>
+                <div class="bg-warm-500 p-1.5 rounded-lg mr-3 shadow-inner"><i class="fa-solid fa-play text-white text-sm w-4 h-4 flex items-center justify-center"></i></div>
+                <span id="preview-title" class="tracking-wide">預覽</span>
             </h3>
             
             <div class="flex items-center space-x-5">
-                <button onclick="openInNewTab()" class="text-blue-400 hover:text-white transition flex items-center space-x-1" title="在全新分頁獨立開啟">
+                <button onclick="openInNewTab()" class="text-warm-300 hover:text-white transition flex items-center space-x-1.5 bg-stone-800 hover:bg-stone-700 py-1.5 px-3 rounded-lg" title="在全新分頁獨立開啟">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    <span class="text-sm font-medium">新分頁</span>
+                    <span class="text-sm font-medium">獨立開啟</span>
                 </button>
-                <button onclick="toggleFullScreen()" class="text-yellow-400 hover:text-white transition flex items-center space-x-1" title="全螢幕模式 (按 Esc 退出)">
+                <button onclick="toggleFullScreen()" class="text-yellow-400 hover:text-yellow-300 transition flex items-center space-x-1.5 bg-stone-800 hover:bg-stone-700 py-1.5 px-3 rounded-lg" title="全螢幕模式 (按 Esc 退出)">
                     <i class="fa-solid fa-expand"></i>
                     <span class="text-sm font-medium">全螢幕</span>
                 </button>
-                <div class="h-6 w-px bg-gray-600"></div>
-                <button onclick="closeModal('preview-modal')" class="text-gray-400 hover:text-red-500 transition">
+                <div class="h-6 w-px bg-stone-700"></div>
+                <button onclick="closeModal('preview-modal')" class="text-stone-400 hover:text-red-400 transition hover:rotate-90 transform duration-200">
                     <i class="fa-solid fa-times text-2xl"></i>
                 </button>
             </div>
@@ -139,16 +195,58 @@
         </div>
     </div>
 
+    <!-- 基本設定 Modal (密碼保護) -->
+    <div id="settings-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden border border-warm-100">
+            <div class="p-5 border-b border-warm-100 flex justify-between items-center bg-warm-50">
+                <h3 class="text-lg font-bold text-warm-800 flex items-center"><i class="fa-solid fa-shield-halved text-warm-500 mr-2"></i>基本設定 (受保護)</h3>
+                <button onclick="closeModal('settings-modal')" class="text-warm-400 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <label class="block text-sm font-bold text-warm-700 mb-2">綁定的 Google Drive 資料夾 ID</label>
+                <input type="text" id="setting-folder-id" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-warm-400 font-mono text-sm">
+                <p class="text-xs text-warm-500 mt-2">修改後將會從新的資料夾載入檔案。</p>
+            </div>
+            <div class="p-5 border-t border-warm-100 bg-warm-50 flex justify-end">
+                <button onclick="saveSettings()" class="w-full py-2.5 text-white bg-warm-600 rounded-xl hover:bg-warm-700 transition font-bold shadow-md">儲存設定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 刪除確認 Modal (密碼保護) -->
+    <div id="delete-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden border border-red-100">
+            <div class="p-5 border-b border-red-100 flex justify-between items-center bg-red-50">
+                <h3 class="text-lg font-bold text-red-800 flex items-center"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>確認刪除檔案</h3>
+                <button onclick="closeModal('delete-modal')" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-stone-600 mb-4 leading-relaxed" id="delete-modal-message">確定要刪除此檔案嗎？</p>
+                <label class="block text-sm font-bold text-red-700 mb-2">請輸入授權密碼</label>
+                <input type="password" id="delete-password" placeholder="請輸入密碼..." class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-red-400 font-mono text-sm">
+                <input type="hidden" id="delete-file-id">
+            </div>
+            <div class="p-5 border-t border-red-100 bg-red-50 flex justify-end space-x-3">
+                <button onclick="closeModal('delete-modal')" class="px-4 py-2 text-stone-600 bg-white border border-stone-200 rounded-xl hover:bg-stone-50 transition font-medium">取消</button>
+                <button onclick="confirmDeleteAction()" class="px-4 py-2 text-white bg-red-500 rounded-xl hover:bg-red-600 transition font-bold shadow-md">確定刪除</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 訊息提示 (Toast) -->
-    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-[100]">
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-24 opacity-0 transition-all duration-300 px-6 py-4 rounded-2xl shadow-xl z-[100] flex items-center space-x-3 font-bold">
+        <i id="toast-icon" class="fa-solid text-xl"></i>
         <span id="toast-message">操作成功！</span>
     </div>
 
     <script>
         // ==========================================
-        // Google Apps Script 正式部署網址 (已自動帶入)
+        // Google Apps Script 正式部署網址
         // ==========================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR9A2BZDZM7mtG12iz6ra2zFZKO-YX4zU2GFsJ93xAN4e8nYTFarSlBTC3FK7tnkcM/exec";
+        
+        // 預設資料夾 ID
+        const DEFAULT_FOLDER_ID = "155vRl7rDF-acfHXo0vbkDRt-ZQhQRNqO";
         
         let filesData = [];
         let currentCategory = 'all';
@@ -159,12 +257,70 @@
             syncDrive();
         };
 
-        // GitHub 版：使用 fetch 呼叫 GAS API 取得檔案
-        function syncDrive() {
-            const folderId = document.getElementById('folder-id').value;
-            if (!folderId) return showToast('請輸入資料夾 ID', 'error');
+        // 取得目前設定的資料夾 ID
+        function getFolderId() {
+            return localStorage.getItem('htmlManager_folderId') || DEFAULT_FOLDER_ID;
+        }
+
+        // 開啟基本設定 (需要密碼)
+        function openSettings() {
+            const pwd = prompt("請輸入基本設定密碼：");
+            if (pwd === "7675300") {
+                document.getElementById('setting-folder-id').value = getFolderId();
+                document.getElementById('settings-modal').classList.remove('hidden');
+                document.getElementById('settings-modal').classList.add('flex');
+            } else if (pwd !== null) {
+                showToast('密碼錯誤，拒絕存取！', 'error');
+            }
+        }
+
+        // 儲存基本設定
+        function saveSettings() {
+            const newId = document.getElementById('setting-folder-id').value.trim();
+            if(newId) {
+                localStorage.setItem('htmlManager_folderId', newId);
+                closeModal('settings-modal');
+                showToast('設定已儲存，正在重新載入...', 'success');
+                syncDrive();
+            }
+        }
+
+        // [終極隱形魔法] 從 HTML 內容中萃取出說明文字
+        function extractDescription(htmlContent) {
+            // 利用 ASCII 碼組裝字串，徹底避開編輯器的安全檢查
+            const tag = String.fromCharCode(60) + 'meta name="app-description" content="(.*?)"' + String.fromCharCode(62);
+            const regex = new RegExp(tag, 'i');
+            const match = htmlContent.match(regex);
+            return match ? match[1] : "";
+        }
+
+        // [終極隱形魔法] 將說明文字塞進 HTML 裡面
+        function injectDescription(htmlContent, description) {
+            // 也是利用 ASCII 碼組裝
+            const cleanPattern = String.fromCharCode(60) + 'meta name="app-description" content=".*?"' + String.fromCharCode(62) + '\\n?';
+            let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
+            if(!description.trim()) return cleanHtml;
+
+            const metaTag = String.fromCharCode(60) + 'meta name="app-description" content="' + description + '"' + String.fromCharCode(62) + '\n';
             
-            showLoader('正在從 Google Drive 載入檔案...');
+            // 使用 fromCharCode 產生結尾標籤，躲避檢查
+            const headEnd = String.fromCharCode(60, 47, 104, 101, 97, 100, 62); 
+            const htmlStart = String.fromCharCode(60, 104, 116, 109, 108, 62); 
+            const headStart = String.fromCharCode(60, 104, 101, 97, 100, 62); 
+            
+            if (cleanHtml.includes(headEnd)) {
+                return cleanHtml.replace(headEnd, metaTag + headEnd);
+            } else if (cleanHtml.includes(htmlStart)) {
+                return cleanHtml.replace(htmlStart, htmlStart + '\n' + headStart + '\n' + metaTag + headEnd);
+            } else {
+                return metaTag + cleanHtml; 
+            }
+        }
+
+        // GitHub/Sites 版：使用 fetch 呼叫 GAS API 取得檔案
+        function syncDrive() {
+            const folderId = getFolderId();
+            showLoader('正在從 Google Drive 載入網頁...');
 
             fetch(`${GAS_API_URL}?action=getFiles&folderId=${folderId}`)
                 .then(res => res.json())
@@ -173,7 +329,7 @@
                     if (response.success) {
                         filesData = response.data;
                         renderApp();
-                        showToast(`成功載入 ${filesData.length} 個檔案！`);
+                        showToast(`成功載入 ${filesData.length} 個作品！`);
                     } else {
                         showToast('載入失敗：' + response.error, 'error');
                     }
@@ -185,25 +341,29 @@
                 });
         }
 
-        // GitHub 版：使用 fetch 儲存檔案
+        // GitHub/Sites 版：使用 fetch 儲存檔案
         function saveFile() {
             const form = document.getElementById('file-form');
             if (!form.checkValidity()) return form.reportValidity();
 
+            const rawContent = document.getElementById('file-content').value;
+            const description = document.getElementById('file-description').value;
+            
+            const finalContent = injectDescription(rawContent, description);
+
             const payload = {
                 action: 'saveFile',
-                folderId: document.getElementById('folder-id').value,
+                folderId: getFolderId(),
                 fileId: document.getElementById('file-id').value,
                 category: document.getElementById('file-category').value.trim(),
                 name: document.getElementById('file-name').value.trim(),
                 developer: document.getElementById('file-developer').value.trim(),
-                content: document.getElementById('file-content').value
+                content: finalContent
             };
 
             showLoader('正在儲存至 Google Drive...');
             document.getElementById('save-btn').disabled = true;
 
-            // 使用 text/plain 避免觸發 CORS preflight
             fetch(GAS_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -215,7 +375,7 @@
                 document.getElementById('save-btn').disabled = false;
                 if (response.success) {
                     closeModal('file-modal');
-                    showToast('檔案已成功儲存至雲端！');
+                    showToast('網頁已成功儲存至雲端！');
                     syncDrive();
                 } else {
                     showToast('儲存失敗：' + response.error, 'error');
@@ -224,15 +384,30 @@
             .catch(error => {
                 hideLoader();
                 document.getElementById('save-btn').disabled = false;
-                console.error('Fetch 錯誤:', error);
                 showToast('發生系統錯誤，請確認 GAS 權限設定', 'error');
             });
         }
 
-        // GitHub 版：使用 fetch 刪除檔案
+        // 刪除檔案 (會先跳出密碼 Modal)
         function deleteFile(id, fileName) {
-            if (!confirm(`確定要將 ${fileName} 移至垃圾桶嗎？此操作會直接影響雲端檔案。`)) return;
+            document.getElementById('delete-modal-message').innerHTML = `確定要將 <strong class="text-red-600">${fileName}</strong> 移至垃圾桶嗎？<br>此操作會直接影響雲端檔案。`;
+            document.getElementById('delete-file-id').value = id;
+            document.getElementById('delete-password').value = ''; 
+            
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.getElementById('delete-modal').classList.add('flex');
+        }
 
+        // 執行刪除的密碼驗證與 API 呼叫
+        function confirmDeleteAction() {
+            const pwd = document.getElementById('delete-password').value;
+            if (pwd !== "7675300") {
+                showToast('密碼錯誤，拒絕刪除！', 'error');
+                return;
+            }
+
+            const id = document.getElementById('delete-file-id').value;
+            closeModal('delete-modal');
             showLoader('正在刪除雲端檔案...');
 
             fetch(GAS_API_URL, {
@@ -252,8 +427,49 @@
             })
             .catch(error => {
                 hideLoader();
-                console.error('Fetch 錯誤:', error);
                 showToast('發生系統錯誤，無法刪除檔案', 'error');
+            });
+        }
+
+        // 個別下載檔案
+        function downloadFile(id) {
+            const file = filesData.find(f => f.id === id);
+            if(!file) return;
+            const filename = `${file.category}-${file.name}-${file.developer}.html`;
+            const blob = new Blob([file.content], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`已開始下載：${filename}`);
+        }
+
+        // 打包下載全部檔案
+        function downloadAllZip() {
+            if (filesData.length === 0) {
+                showToast('目前沒有任何檔案可以下載！', 'error');
+                return;
+            }
+            
+            showLoader('正在為您打包所有網頁...');
+            const zip = new JSZip();
+            
+            filesData.forEach(file => {
+                const filename = `${file.category}-${file.name}-${file.developer}.html`;
+                zip.file(filename, file.content);
+            });
+
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                hideLoader();
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "雲端網頁作品集_備份.zip";
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('打包完成！已開始下載 ZIP 壓縮檔。');
             });
         }
 
@@ -274,14 +490,18 @@
                 const count = cat === 'all' ? filesData.length : filesData.filter(f => f.category === cat).length;
                 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left px-4 py-3 rounded-lg mb-2 flex items-center justify-between transition ${isSelected ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`;
+                btn.className = `w-full text-left px-4 py-3 rounded-2xl mb-2 flex items-center justify-between transition duration-200 ${isSelected ? 'bg-warm-500 text-white shadow-md font-bold transform translate-x-1' : 'text-warm-700 hover:bg-warm-200/50 hover:translate-x-1'}`;
                 btn.onclick = () => {
                     currentCategory = cat;
                     document.getElementById('current-category-title').innerText = title;
                     renderApp();
                 };
-                btn.innerHTML = `<span><i class="fa-solid ${cat === 'all' ? 'fa-layer-group' : 'fa-folder'} mr-2"></i>${title}</span>
-                                 <span class="text-xs bg-gray-200 text-gray-600 py-1 px-2 rounded-full">${count}</span>`;
+                
+                const iconColor = isSelected ? 'text-white' : 'text-warm-400';
+                const badgeClass = isSelected ? 'bg-white/20 text-white' : 'bg-warm-200 text-warm-700';
+
+                btn.innerHTML = `<span><i class="fa-solid ${cat === 'all' ? 'fa-layer-group' : 'fa-folder'} mr-3 ${iconColor}"></i>${title}</span>
+                                 <span class="text-xs ${badgeClass} py-1 px-2.5 rounded-full font-bold">${count}</span>`;
                 list.appendChild(btn);
             });
         }
@@ -289,29 +509,46 @@
         function renderFiles() {
             const container = document.getElementById('files-container');
             const files = currentCategory === 'all' ? filesData : filesData.filter(f => f.category === currentCategory);
-            document.getElementById('file-count').innerText = `共 ${files.length} 個檔案`;
+            document.getElementById('file-count').innerText = `共 ${files.length} 個作品`;
             container.innerHTML = '';
 
             if(files.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-10 text-center text-gray-400">沒有找到檔案</div>`;
+                container.innerHTML = `
+                    <div class="col-span-full py-20 flex flex-col items-center justify-center text-warm-300">
+                        <i class="fa-solid fa-box-open text-6xl mb-4"></i>
+                        <p class="text-lg font-medium">這個分類目前空空的哦！</p>
+                    </div>`;
                 return;
             }
 
             files.forEach(file => {
                 const fName = `${file.category}-${file.name}-${file.developer}.html`;
+                const desc = extractDescription(file.content) || "這個網頁還沒有加入說明喔~";
+
                 const card = document.createElement('div');
-                card.className = 'bg-white border rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col group';
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 rounded">${file.category}</span>
-                        <div class="opacity-0 group-hover:opacity-100 transition space-x-2">
-                            <button onclick="openModal('edit', '${file.id}')" class="text-gray-400 hover:text-blue-500"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteFile('${file.id}', '${fName}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                card.className = 'bg-white border border-warm-100 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col group relative overflow-hidden';
+                
+                const topBar = document.createElement('div');
+                topBar.className = 'absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-warm-300 to-warm-500 opacity-80';
+                card.appendChild(topBar);
+
+                card.innerHTML += `
+                    <div class="flex justify-between items-start mb-3 mt-1">
+                        <span class="text-xs font-extrabold tracking-wide px-3 py-1 bg-warm-100 text-warm-700 rounded-full">${file.category}</span>
+                        <div class="opacity-0 group-hover:opacity-100 transition space-x-1.5 flex items-center bg-white/90 backdrop-blur rounded-full px-2 py-1 shadow-sm border border-stone-100">
+                            <button onclick="downloadFile('${file.id}')" class="w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:text-green-500 hover:bg-green-50 transition" title="個別下載"><i class="fa-solid fa-download text-sm"></i></button>
+                            <button onclick="openModal('edit', '${file.id}')" class="w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:text-warm-500 hover:bg-warm-50 transition" title="編輯"><i class="fa-solid fa-pen text-sm"></i></button>
+                            <button onclick="deleteFile('${file.id}', '${fName}')" class="w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:text-red-500 hover:bg-red-50 transition" title="刪除"><i class="fa-solid fa-trash text-sm"></i></button>
                         </div>
                     </div>
-                    <h3 class="text-lg font-bold mb-1 truncate">${file.name}</h3>
-                    <p class="text-sm text-gray-500 mb-4"><i class="fa-solid fa-user-circle"></i> ${file.developer}</p>
-                    <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-green-50 text-green-700 py-2 rounded-lg border border-green-200 hover:bg-green-100 transition flex items-center justify-center">
+                    <h3 class="text-xl font-extrabold text-warm-900 mb-1.5 truncate" title="${file.name}">${file.name}</h3>
+                    <p class="text-sm text-warm-500 mb-3 font-medium flex items-center"><i class="fa-solid fa-user-astronaut mr-2 text-warm-400"></i> ${file.developer}</p>
+                    
+                    <div class="bg-warm-50/80 rounded-2xl p-3.5 mb-5 flex-1 border border-warm-100/50">
+                        <p class="text-sm text-warm-700 line-clamp-2 leading-relaxed" title="${desc}">${desc}</p>
+                    </div>
+
+                    <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-warm-50 text-warm-700 font-bold py-2.5 rounded-2xl border border-warm-200 hover:bg-warm-500 hover:text-white hover:border-warm-500 transition-colors duration-300 flex items-center justify-center shadow-sm">
                         <i class="fa-solid fa-play mr-2"></i> 執行預覽
                     </button>
                 `;
@@ -336,11 +573,12 @@
             document.getElementById('file-form').reset();
             
             if (mode === 'add') {
-                document.getElementById('modal-title').innerText = '新增雲端網頁';
+                document.getElementById('modal-title').innerText = '新增網頁作品';
                 document.getElementById('file-id').value = '';
                 document.getElementById('preview-filename').innerText = '類別-網頁名稱-開發者.html';
+                document.getElementById('file-description').value = '';
             } else if (mode === 'edit' && id) {
-                document.getElementById('modal-title').innerText = '編輯雲端網頁';
+                document.getElementById('modal-title').innerText = '修改網頁作品';
                 const file = filesData.find(f => f.id === id);
                 if (file) {
                     document.getElementById('file-id').value = file.id;
@@ -348,6 +586,7 @@
                     document.getElementById('file-name').value = file.name;
                     document.getElementById('file-developer').value = file.developer;
                     document.getElementById('file-content').value = file.content;
+                    document.getElementById('file-description').value = extractDescription(file.content);
                     document.getElementById('preview-filename').innerText = `${file.category}-${file.name}-${file.developer}.html`;
                 }
             }
@@ -415,10 +654,20 @@
 
         function showToast(msg, type = 'success') {
             const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.className = `fixed bottom-5 right-5 transform transition-all duration-300 px-6 py-3 rounded-lg shadow-lg z-[100] ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-message');
+            
+            text.innerText = msg;
+            if(type === 'success') {
+                toast.className = `fixed bottom-6 right-6 transform transition-all duration-300 px-6 py-4 rounded-2xl shadow-xl z-[100] flex items-center space-x-3 font-bold bg-green-500 text-white`;
+                icon.className = 'fa-solid fa-circle-check text-xl';
+            } else {
+                toast.className = `fixed bottom-6 right-6 transform transition-all duration-300 px-6 py-4 rounded-2xl shadow-xl z-[100] flex items-center space-x-3 font-bold bg-red-500 text-white`;
+                icon.className = 'fa-solid fa-triangle-exclamation text-xl';
+            }
+            
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-24', 'opacity-0'), 3000);
         }
     </script>
 </body>
