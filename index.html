@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 加入 viewport-fit=cover 確保在 iPhone 等全螢幕手機不會被瀏海遮擋 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>AI應用教學網頁管理 V.1.1</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,26 +19,13 @@
                 extend: {
                     colors: {
                         mocha: {
-                            50: '#fdfbf7',  /* 燕麥奶白 */
-                            100: '#f6f1e9', /* 淺卡其 */
-                            200: '#eaddc8', /* 拿鐵色 */
-                            300: '#dcb897',
-                            400: '#ce946b',
-                            500: '#b87349', /* 焦糖色 */
-                            600: '#a35a39',
-                            700: '#884632', /* 咖啡豆色 */
-                            800: '#703a2c',
-                            900: '#5b3226',
+                            50: '#fdfbf7',  100: '#f6f1e9', 200: '#eaddc8', 300: '#dcb897',
+                            400: '#ce946b', 500: '#b87349', 600: '#a35a39', 700: '#884632',
+                            800: '#703a2c', 900: '#5b3226',
                         },
                         sage: {
-                            50: '#f4f7f4',
-                            100: '#e4ebe4',
-                            200: '#cbdad1',
-                            300: '#a6bfb0',
-                            400: '#7e9e8c', /* 森綠色 */
-                            500: '#608270',
-                            600: '#4a6758',
-                            700: '#3e5348',
+                            50: '#f4f7f4',  100: '#e4ebe4', 200: '#cbdad1', 300: '#a6bfb0',
+                            400: '#7e9e8c', 500: '#608270', 600: '#4a6758', 700: '#3e5348',
                         }
                     }
                 }
@@ -46,23 +34,16 @@
     </script>
     <style>
         body { font-family: 'Helvetica Neue', Helvetica, Arial, 'Microsoft JhengHei', sans-serif; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #fdfbf7; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #eaddc8; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #dcb897; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         /* 咖啡休閒風飄浮動畫 */
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(5deg); }
-        }
-        @keyframes float-reverse {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(-8deg); }
-        }
+        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-15px) rotate(5deg); } }
+        @keyframes float-reverse { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(-8deg); } }
         .float-anim { animation: float 6s ease-in-out infinite; }
         .float-anim-rev { animation: float-reverse 7s ease-in-out infinite; }
         .delay-1 { animation-delay: 1.5s; }
@@ -71,136 +52,182 @@
         /* 載入中遮罩 */
         #loader { display: none; }
         body.loading #loader { display: flex; }
-        /* 全螢幕時的 iframe 樣式 */
         #preview-frame:fullscreen { background-color: #fdfbf7; width: 100vw; height: 100vh; }
-        
-        /* 超出兩行顯示刪節號 */
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;  
-            overflow: hidden;
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* 手機版分頁顯示邏輯 */
+        @media (max-width: 767px) {
+            body[data-mobile-tab="files"] #sidebar-container { display: none !important; }
+            body[data-mobile-tab="files"] #main-container { display: flex !important; }
+
+            body[data-mobile-tab="categories"] #sidebar-container { display: flex !important; width: 100%; flex: 1; }
+            body[data-mobile-tab="categories"] #main-container { display: none !important; }
+            body[data-mobile-tab="categories"] #section-categories { display: flex !important; }
+            body[data-mobile-tab="categories"] #section-actions { display: none !important; }
+
+            body[data-mobile-tab="actions"] #sidebar-container { display: flex !important; width: 100%; flex: 1; background: #fdfbf7;}
+            body[data-mobile-tab="actions"] #main-container { display: none !important; }
+            body[data-mobile-tab="actions"] #section-categories { display: none !important; }
+            body[data-mobile-tab="actions"] #section-actions { display: block !important; padding: 2rem; flex: 1; }
         }
     </style>
 </head>
-<body class="bg-mocha-50 text-mocha-900 h-screen flex overflow-hidden selection:bg-mocha-200 text-lg">
+<body class="bg-mocha-50 text-mocha-900 h-[100dvh] flex flex-col selection:bg-mocha-200 text-base md:text-lg" data-mobile-tab="files">
 
     <!-- 全局載入中遮罩 -->
     <div id="loader" class="fixed inset-0 bg-mocha-50/90 backdrop-blur-sm z-[999] flex-col items-center justify-center fade-in">
-        <i class="fa-solid fa-mug-hot fa-bounce text-7xl text-mocha-500 mb-6"></i>
-        <p class="text-2xl font-bold text-mocha-800 tracking-widest" id="loader-text">萃取資料中...</p>
+        <i class="fa-solid fa-mug-hot fa-bounce text-6xl md:text-7xl text-mocha-500 mb-6"></i>
+        <p class="text-xl md:text-2xl font-bold text-mocha-800 tracking-widest" id="loader-text">萃取資料中...</p>
     </div>
 
-    <!-- 左側分類導覽列 (清新自然風) -->
-    <aside class="w-80 bg-white border-r border-mocha-100 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative">
-        <div class="p-8 border-b border-mocha-100 flex items-center space-x-5 bg-mocha-50/80">
-            <div class="bg-mocha-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-md transform -rotate-3 hover:rotate-0 transition-transform">
-                <i class="fa-solid fa-store text-2xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl font-bold text-mocha-800 tracking-wide leading-tight">AI應用教學</h1>
-                <span class="text-sm font-bold text-mocha-500 bg-mocha-100 px-3 py-1 rounded-md mt-1.5 inline-block border border-mocha-200 shadow-sm">V.1.1</span>
-            </div>
+    <!-- 手機版頂部標題列 (僅在手機顯示) -->
+    <header class="md:hidden bg-white border-b border-mocha-100 px-6 py-4 flex justify-between items-center shadow-sm z-20 flex-shrink-0">
+        <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
+            <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 教學咖啡館
         </div>
-        <div class="p-6 flex-1 overflow-y-auto space-y-2 relative" id="category-list">
-            <!-- 分類列表 -->
-        </div>
+        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.1</span>
+    </header>
+
+    <!-- 主要排版容器 -->
+    <div class="flex flex-1 overflow-hidden relative">
         
-        <!-- 左下角操作按鈕區 -->
-        <div class="p-7 border-t border-mocha-100 space-y-4 bg-white">
-            <button onclick="openModal('add')" class="w-full bg-mocha-600 hover:bg-mocha-700 text-white text-lg font-bold py-3.5 px-4 rounded-xl transition duration-300 shadow-sm flex items-center justify-center space-x-2 group">
-                <i class="fa-solid fa-fire-burner text-base group-hover:animate-pulse"></i>
-                <span>烘焙新網頁</span>
-            </button>
-            <button onclick="syncDrive()" class="w-full bg-mocha-50 hover:bg-mocha-100 text-mocha-700 text-lg font-bold py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group">
-                <i class="fa-solid fa-mug-saucer text-base group-hover:scale-110 transition-transform"></i>
-                <span>重新沖泡</span>
-            </button>
-            <button onclick="downloadAllZip()" class="w-full bg-sage-50 hover:bg-sage-100 text-sage-700 text-lg font-bold py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group">
-                <i class="fa-solid fa-bag-shopping text-base group-hover:-translate-y-1 transition-transform"></i>
-                <span>打包外帶</span>
-            </button>
-            <button onclick="openSettings()" class="w-full text-mocha-400 hover:text-mocha-600 font-bold py-2 px-4 text-base transition flex items-center justify-center mt-4 group">
-                <i class="fa-solid fa-sliders mr-2 group-hover:rotate-90 transition-transform"></i> 咖啡館設定
-            </button>
-        </div>
-    </aside>
-
-    <!-- 右側主要內容區 -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-mocha-50/50">
-        <!-- 裝飾背景 (飄浮的咖啡元素) -->
-        <div class="absolute top-0 right-0 w-full h-64 bg-gradient-to-b from-white to-transparent opacity-80 pointer-events-none z-0"></div>
-        <i class="fa-solid fa-mug-hot absolute right-16 top-24 text-mocha-200 opacity-20 text-8xl float-anim z-0 pointer-events-none"></i>
-        <i class="fa-solid fa-cookie-bite absolute left-1/4 bottom-20 text-mocha-300 opacity-15 text-7xl float-anim-rev delay-1 z-0 pointer-events-none"></i>
-        <i class="fa-solid fa-leaf absolute right-1/3 bottom-1/3 text-sage-200 opacity-20 text-7xl float-anim delay-2 z-0 pointer-events-none"></i>
-        <i class="fa-solid fa-seedling absolute left-10 top-1/3 text-sage-200 opacity-15 text-6xl float-anim-rev delay-1 z-0 pointer-events-none"></i>
-
-        <header class="pt-12 pb-8 px-12 flex justify-between items-end z-10 relative">
-            <div>
-                <h2 class="text-4xl font-bold text-mocha-900 tracking-tight" id="current-category-title">特調總覽</h2>
-                <div class="text-lg text-mocha-500 mt-3 font-medium flex items-center">
-                    <i class="fa-solid fa-book-open text-mocha-400 mr-2 text-xl"></i>
-                    <span id="file-count">共 0 份作品</span>
+        <!-- 左側分類導覽列 (在手機端會變成對應的分頁內容) -->
+        <aside id="sidebar-container" class="hidden md:flex flex-col w-full md:w-80 bg-white border-r border-mocha-100 z-20 h-full">
+            <!-- 電腦版標題列 -->
+            <div class="hidden md:flex p-8 border-b border-mocha-100 items-center space-x-5 bg-mocha-50/80">
+                <div class="bg-mocha-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-md transform -rotate-3 hover:rotate-0 transition-transform">
+                    <i class="fa-solid fa-store text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-mocha-800 tracking-wide leading-tight">AI應用教學</h1>
+                    <span class="text-sm font-bold text-mocha-500 bg-mocha-100 px-3 py-1 rounded-md mt-1.5 inline-block border border-mocha-200 shadow-sm">V.1.1</span>
                 </div>
             </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto px-12 pb-12 z-10 relative">
-            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8" id="files-container">
+            
+            <!-- 分類列表區塊 -->
+            <div id="section-categories" class="flex flex-col flex-1 h-full overflow-hidden">
+                <div class="md:hidden px-6 py-4 bg-mocha-50 text-mocha-700 font-bold border-b border-mocha-100 flex items-center">
+                    <i class="fa-solid fa-tags mr-2 text-sage-500"></i> 請選擇網頁風味
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto space-y-2 relative" id="category-list">
+                    <!-- 分類列表將由 JS 產生 -->
+                </div>
             </div>
-        </div>
-    </main>
+            
+            <!-- 操作按鈕區塊 -->
+            <div id="section-actions" class="hidden md:block p-7 border-t border-mocha-100 space-y-4 bg-white">
+                <div class="md:hidden pb-6 text-center text-mocha-800 font-bold text-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-mug-hot text-mocha-500 mr-3"></i> 咖啡館服務
+                </div>
+                <button onclick="openModal('add')" class="w-full bg-mocha-600 hover:bg-mocha-700 text-white text-base md:text-lg font-bold py-3.5 px-4 rounded-xl transition duration-300 shadow-md flex items-center justify-center space-x-2 group">
+                    <i class="fa-solid fa-fire-burner group-hover:animate-pulse"></i>
+                    <span>烘焙新網頁</span>
+                </button>
+                <button onclick="syncDrive()" class="w-full bg-mocha-50 hover:bg-mocha-100 text-mocha-700 text-base md:text-lg font-bold py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group border border-mocha-200">
+                    <i class="fa-solid fa-mug-saucer group-hover:scale-110 transition-transform"></i>
+                    <span>重新沖泡</span>
+                </button>
+                <button onclick="downloadAllZip()" class="w-full bg-sage-50 hover:bg-sage-100 text-sage-700 text-base md:text-lg font-bold py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group border border-sage-200">
+                    <i class="fa-solid fa-bag-shopping group-hover:-translate-y-1 transition-transform"></i>
+                    <span>打包外帶</span>
+                </button>
+                <button onclick="openSettings()" class="w-full text-mocha-400 hover:text-mocha-600 font-bold py-4 text-sm md:text-base transition flex items-center justify-center mt-2 group">
+                    <i class="fa-solid fa-sliders mr-2 group-hover:rotate-90 transition-transform"></i> 咖啡館設定
+                </button>
+            </div>
+        </aside>
 
-    <!-- 新增/修改 Modal (質感留白風格) -->
-    <div id="file-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-50 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="p-8 border-b border-mocha-100 flex justify-between items-center bg-mocha-50/50">
-                <h3 class="text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-pen-fancy text-sage-500 mr-3"></i> <span id="modal-title">調製新網頁</span></h3>
+        <!-- 右側主要內容區 (在手機端為預設分頁) -->
+        <main id="main-container" class="flex flex-col flex-1 h-full overflow-hidden relative bg-mocha-50/50">
+            <!-- 裝飾背景 (飄浮的咖啡元素) -->
+            <div class="absolute top-0 right-0 w-full h-64 bg-gradient-to-b from-white to-transparent opacity-80 pointer-events-none z-0"></div>
+            <i class="fa-solid fa-mug-hot absolute right-4 md:right-16 top-10 md:top-24 text-mocha-200 opacity-20 text-6xl md:text-8xl float-anim z-0 pointer-events-none"></i>
+            <i class="fa-solid fa-cookie-bite absolute left-1/4 bottom-10 md:bottom-20 text-mocha-300 opacity-15 text-5xl md:text-7xl float-anim-rev delay-1 z-0 pointer-events-none"></i>
+            <i class="fa-solid fa-leaf absolute right-1/3 bottom-1/4 text-sage-200 opacity-20 text-5xl md:text-7xl float-anim delay-2 z-0 pointer-events-none"></i>
+
+            <header class="pt-8 md:pt-12 pb-6 px-6 md:px-12 flex justify-between items-end z-10 relative">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-mocha-900 tracking-tight" id="current-category-title">特調總覽</h2>
+                    <div class="text-base md:text-lg text-mocha-500 mt-2 md:mt-3 font-medium flex items-center">
+                        <i class="fa-solid fa-book-open text-mocha-400 mr-2 text-lg md:text-xl"></i>
+                        <span id="file-count">共 0 份作品</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 在手機版預留底部 padding 以免被導航列擋住 -->
+            <div class="flex-1 overflow-y-auto px-6 md:px-12 pb-24 md:pb-12 z-10 relative">
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 md:gap-8" id="files-container">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 手機版底部導航列 (Mobile Bottom Tab Bar) -->
+    <nav class="md:hidden flex bg-white border-t border-mocha-100 z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe absolute bottom-0 w-full">
+        <button onclick="switchMobileTab('files')" id="tab-btn-files" class="mobile-tab-btn flex-1 py-3.5 flex flex-col items-center text-sage-600 font-bold transition-colors">
+            <i class="fa-solid fa-book-open text-xl mb-1.5"></i>
+            <span class="text-xs tracking-wider">書櫃</span>
+        </button>
+        <button onclick="switchMobileTab('categories')" id="tab-btn-categories" class="mobile-tab-btn flex-1 py-3.5 flex flex-col items-center text-mocha-400 font-medium transition-colors">
+            <i class="fa-solid fa-tags text-xl mb-1.5"></i>
+            <span class="text-xs tracking-wider">分類</span>
+        </button>
+        <button onclick="switchMobileTab('actions')" id="tab-btn-actions" class="mobile-tab-btn flex-1 py-3.5 flex flex-col items-center text-mocha-400 font-medium transition-colors">
+            <i class="fa-solid fa-mug-hot text-xl mb-1.5"></i>
+            <span class="text-xs tracking-wider">服務</span>
+        </button>
+    </nav>
+
+    <!-- 新增/修改 Modal -->
+    <div id="file-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-50 fade-in p-4 md:p-0">
+        <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-6 md:p-8 border-b border-mocha-100 flex justify-between items-center bg-mocha-50/50">
+                <h3 class="text-xl md:text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-pen-fancy text-sage-500 mr-3"></i> <span id="modal-title">調製新網頁</span></h3>
                 <button onclick="closeModal('file-modal')" class="text-mocha-400 hover:text-mocha-700 transition">
                     <i class="fa-solid fa-times text-2xl"></i>
                 </button>
             </div>
-            <div class="p-10 flex-1 overflow-y-auto bg-white relative">
-                <!-- 淡淡的背景圖 -->
-                <i class="fa-solid fa-feather-pointed absolute right-10 bottom-10 text-[10rem] text-mocha-50 opacity-50 z-0 pointer-events-none -rotate-12"></i>
+            <div class="p-6 md:p-10 flex-1 overflow-y-auto bg-white relative">
+                <i class="fa-solid fa-feather-pointed absolute right-4 md:right-10 bottom-10 text-[6rem] md:text-[10rem] text-mocha-50 opacity-50 z-0 pointer-events-none -rotate-12"></i>
                 
-                <form id="file-form" class="space-y-8 relative z-10">
+                <form id="file-form" class="space-y-6 md:space-y-8 relative z-10">
                     <input type="hidden" id="file-id">
                     
-                    <div class="grid grid-cols-3 gap-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                         <div>
-                            <label class="block text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-tag text-sage-400 mr-1.5"></i>分類風味</label>
-                            <input type="text" id="file-category" placeholder="例如：教學" required class="w-full text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white">
+                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-tag text-sage-400 mr-1.5"></i>分類風味</label>
+                            <input type="text" id="file-category" placeholder="例如：教學" required class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white">
                         </div>
                         <div>
-                            <label class="block text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-font text-sage-400 mr-1.5"></i>網頁名稱</label>
-                            <input type="text" id="file-name" placeholder="例如：首頁" required class="w-full text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white">
+                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-font text-sage-400 mr-1.5"></i>網頁名稱</label>
+                            <input type="text" id="file-name" placeholder="例如：首頁" required class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white">
                         </div>
                         <div>
-                            <label class="block text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-user-astronaut text-sage-400 mr-1.5"></i>作者</label>
-                            <input type="text" id="file-developer" placeholder="例如：王大明" required class="w-full text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white">
+                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-user-astronaut text-sage-400 mr-1.5"></i>作者</label>
+                            <input type="text" id="file-developer" placeholder="例如：王大明" required class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-quote-left text-sage-400 mr-1.5"></i>內容簡介</label>
-                        <textarea id="file-description" rows="2" placeholder="寫下這份網頁的設計理念或用途..." class="w-full text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-4 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm resize-none text-mocha-800 focus:bg-white"></textarea>
+                        <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-quote-left text-sage-400 mr-1.5"></i>內容簡介</label>
+                        <textarea id="file-description" rows="3" placeholder="寫下這份網頁的設計理念或用途..." class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-4 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm resize-none text-mocha-800 focus:bg-white"></textarea>
                     </div>
                     
-                    <div class="text-sm font-bold text-mocha-500 flex items-center justify-end">
-                        <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i>
-                        將儲存為：<span id="preview-filename" class="text-mocha-700 ml-2 font-mono bg-mocha-100 px-3 py-1 rounded text-base">類別-網頁名稱-開發者.html</span>
+                    <div class="text-xs md:text-sm font-bold text-mocha-500 flex items-center justify-end">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2 text-sm md:text-base"></i>
+                        將儲存為：<span id="preview-filename" class="text-mocha-700 ml-2 font-mono bg-mocha-100 px-2 py-1 rounded text-xs md:text-base">檔案名稱.html</span>
                     </div>
 
                     <div>
-                        <label class="block text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-code text-sage-400 mr-1.5"></i>HTML 原始碼</label>
-                        <textarea id="file-content" required rows="10" placeholder="<!DOCTYPE html>..." class="w-full text-base bg-slate-50 border border-mocha-200 rounded-lg p-5 font-mono outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-inner text-slate-700 focus:bg-white"></textarea>
+                        <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-code text-sage-400 mr-1.5"></i>HTML 原始碼</label>
+                        <textarea id="file-content" required rows="8" placeholder="<!DOCTYPE html>..." class="w-full text-sm md:text-base bg-slate-50 border border-mocha-200 rounded-lg p-4 md:p-5 font-mono outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-inner text-slate-700 focus:bg-white"></textarea>
                     </div>
                 </form>
             </div>
-            <div class="p-7 border-t border-mocha-100 flex justify-end space-x-5 bg-mocha-50/50">
-                <button onclick="closeModal('file-modal')" class="px-8 py-3 text-lg text-mocha-600 bg-white border border-mocha-200 rounded-lg hover:bg-mocha-100 transition font-bold">取消</button>
-                <button id="save-btn" onclick="saveFile()" class="px-8 py-3 text-lg text-white bg-sage-600 rounded-lg hover:bg-sage-700 transition font-bold shadow-md flex items-center">
+            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end space-x-3 md:space-x-5 bg-mocha-50/50">
+                <button onclick="closeModal('file-modal')" class="px-5 py-2.5 md:px-8 md:py-3 text-base md:text-lg text-mocha-600 bg-white border border-mocha-200 rounded-lg hover:bg-mocha-100 transition font-bold">取消</button>
+                <button id="save-btn" onclick="saveFile()" class="px-5 py-2.5 md:px-8 md:py-3 text-base md:text-lg text-white bg-sage-600 rounded-lg hover:bg-sage-700 transition font-bold shadow-md flex items-center">
                     <i class="fa-solid fa-check mr-2"></i>確認收藏
                 </button>
             </div>
@@ -209,78 +236,78 @@
 
     <!-- 執行/預覽 Modal -->
     <div id="preview-modal" class="fixed inset-0 bg-mocha-900/95 hidden flex-col z-[60] fade-in">
-        <div class="flex justify-between items-center px-6 py-4 bg-transparent text-mocha-100">
-            <h3 class="text-xl font-bold flex items-center truncate max-w-2xl">
+        <div class="flex justify-between items-center px-4 py-3 md:px-6 md:py-4 bg-transparent text-mocha-100">
+            <h3 class="text-base md:text-xl font-bold flex items-center truncate max-w-xs md:max-w-2xl">
                 <i class="fa-solid fa-tv text-sage-400 mr-3"></i> 
-                <span id="preview-title" class="tracking-wide">網頁預覽</span>
+                <span id="preview-title" class="tracking-wide truncate">網頁預覽</span>
             </h3>
             
-            <div class="flex items-center space-x-4">
-                <button onclick="openInNewTab()" class="text-mocha-300 hover:text-white transition flex items-center px-4 py-2 rounded bg-mocha-800/50 hover:bg-mocha-700" title="在全新分頁獨立開啟">
-                    <i class="fa-solid fa-arrow-up-right-from-square text-base mr-2"></i>
-                    <span class="text-base font-bold">獨立視窗</span>
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <button onclick="openInNewTab()" class="text-mocha-300 hover:text-white transition flex items-center px-2.5 py-1.5 md:px-4 md:py-2 rounded bg-mocha-800/50 hover:bg-mocha-700" title="在全新分頁獨立開啟">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-sm md:text-base md:mr-2"></i>
+                    <span class="hidden md:inline text-base font-bold">獨立視窗</span>
                 </button>
-                <button onclick="toggleFullScreen()" class="text-mocha-300 hover:text-white transition flex items-center px-4 py-2 rounded bg-mocha-800/50 hover:bg-mocha-700" title="全螢幕模式 (按 Esc 退出)">
-                    <i class="fa-solid fa-expand text-base mr-2"></i>
-                    <span class="text-base font-bold">全螢幕</span>
+                <button onclick="toggleFullScreen()" class="text-mocha-300 hover:text-white transition flex items-center px-2.5 py-1.5 md:px-4 md:py-2 rounded bg-mocha-800/50 hover:bg-mocha-700" title="全螢幕模式 (按 Esc 退出)">
+                    <i class="fa-solid fa-expand text-sm md:text-base md:mr-2"></i>
+                    <span class="hidden md:inline text-base font-bold">全螢幕</span>
                 </button>
-                <div class="h-6 w-px bg-mocha-700 mx-2"></div>
-                <button onclick="closeModal('preview-modal')" class="text-mocha-400 hover:text-red-400 transition w-10 h-10 flex items-center justify-center rounded-full hover:bg-mocha-800">
-                    <i class="fa-solid fa-times text-2xl"></i>
+                <div class="h-6 w-px bg-mocha-700 mx-1 md:mx-2"></div>
+                <button onclick="closeModal('preview-modal')" class="text-mocha-400 hover:text-red-400 transition w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-mocha-800">
+                    <i class="fa-solid fa-times text-xl md:text-2xl"></i>
                 </button>
             </div>
         </div>
-        <div class="flex-1 bg-white relative rounded-t-3xl mx-3 shadow-2xl overflow-hidden border-t-4 border-mocha-600">
+        <div class="flex-1 bg-white relative rounded-t-2xl md:rounded-t-3xl mx-1 md:mx-3 shadow-2xl overflow-hidden border-t-4 border-mocha-600">
             <iframe id="preview-frame" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
         </div>
     </div>
 
     <!-- 基本設定 Modal -->
-    <div id="settings-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in">
+    <div id="settings-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in p-4 md:p-0">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
-            <div class="p-7 border-b border-mocha-100 flex justify-between items-center">
-                <h3 class="text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-store text-sage-500 mr-3"></i>咖啡館設定</h3>
-                <button onclick="closeModal('settings-modal')" class="text-mocha-400 hover:text-mocha-600 transition"><i class="fa-solid fa-times text-2xl"></i></button>
+            <div class="p-6 md:p-7 border-b border-mocha-100 flex justify-between items-center">
+                <h3 class="text-xl md:text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-store text-sage-500 mr-3"></i>咖啡館設定</h3>
+                <button onclick="closeModal('settings-modal')" class="text-mocha-400 hover:text-mocha-600 transition"><i class="fa-solid fa-times text-xl md:text-2xl"></i></button>
             </div>
-            <div class="p-8 bg-mocha-50/30 relative overflow-hidden">
-                <i class="fa-solid fa-gear absolute -right-6 -bottom-6 text-[10rem] text-mocha-100 opacity-50 z-0 pointer-events-none"></i>
+            <div class="p-6 md:p-8 bg-mocha-50/30 relative overflow-hidden">
+                <i class="fa-solid fa-gear absolute -right-6 -bottom-6 text-[8rem] md:text-[10rem] text-mocha-100 opacity-50 z-0 pointer-events-none"></i>
                 <div class="relative z-10">
-                    <label class="block text-lg font-bold text-mocha-700 mb-3">Google Drive 資料夾 ID</label>
-                    <input type="text" id="setting-folder-id" class="w-full text-lg bg-white border border-mocha-200 rounded-xl p-4 outline-none focus:ring-2 focus:ring-sage-400 font-mono text-mocha-800 shadow-sm">
+                    <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">Google Drive 資料夾 ID</label>
+                    <input type="text" id="setting-folder-id" class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-sage-400 font-mono text-mocha-800 shadow-sm">
                 </div>
             </div>
-            <div class="p-7 border-t border-mocha-100 flex justify-end bg-white">
-                <button onclick="saveSettings()" class="w-full py-3 text-xl text-white bg-sage-600 rounded-xl hover:bg-sage-700 transition font-bold shadow-md">套用設定</button>
+            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end bg-white">
+                <button onclick="saveSettings()" class="w-full py-3 text-lg md:text-xl text-white bg-sage-600 rounded-xl hover:bg-sage-700 transition font-bold shadow-md">套用設定</button>
             </div>
         </div>
     </div>
 
     <!-- 刪除確認 Modal -->
-    <div id="delete-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in">
+    <div id="delete-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in p-4 md:p-0">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden border-t-8 border-red-500">
-            <div class="p-7 border-b border-mocha-100 flex justify-between items-center">
-                <h3 class="text-2xl font-bold text-red-700 flex items-center"><i class="fa-solid fa-trash-can mr-3"></i>倒掉這杯特調</h3>
-                <button onclick="closeModal('delete-modal')" class="text-mocha-400 hover:text-mocha-600 transition"><i class="fa-solid fa-times text-2xl"></i></button>
+            <div class="p-6 md:p-7 border-b border-mocha-100 flex justify-between items-center">
+                <h3 class="text-xl md:text-2xl font-bold text-red-700 flex items-center"><i class="fa-solid fa-trash-can mr-3"></i>倒掉這杯特調</h3>
+                <button onclick="closeModal('delete-modal')" class="text-mocha-400 hover:text-mocha-600 transition"><i class="fa-solid fa-times text-xl md:text-2xl"></i></button>
             </div>
-            <div class="p-8 bg-red-50/30">
-                <p class="text-lg text-mocha-700 mb-6 leading-relaxed" id="delete-modal-message">確定要捨棄嗎？</p>
-                <label class="block text-lg font-bold text-mocha-700 mb-3">請輸入授權密碼</label>
-                <input type="password" id="delete-password" placeholder="••••••" class="w-full text-xl bg-white border border-red-200 rounded-xl p-4 outline-none focus:ring-2 focus:ring-red-400 font-mono shadow-sm">
+            <div class="p-6 md:p-8 bg-red-50/30">
+                <p class="text-base md:text-lg text-mocha-700 mb-5 md:mb-6 leading-relaxed" id="delete-modal-message">確定要捨棄嗎？</p>
+                <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">請輸入授權密碼</label>
+                <input type="password" id="delete-password" placeholder="••••••" class="w-full text-lg md:text-xl bg-white border border-red-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-red-400 font-mono shadow-sm">
                 <input type="hidden" id="delete-file-id">
             </div>
-            <div class="p-7 border-t border-mocha-100 flex justify-end space-x-4 bg-white">
-                <button onclick="closeModal('delete-modal')" class="px-6 py-3 text-lg text-mocha-600 bg-mocha-50 rounded-xl hover:bg-mocha-100 transition font-bold border border-mocha-200">保留不刪</button>
-                <button onclick="confirmDeleteAction()" class="px-6 py-3 text-lg text-white bg-red-600 rounded-xl hover:bg-red-700 transition font-bold shadow-md flex items-center">
-                    <i class="fa-solid fa-trash mr-2"></i>確認捨棄
+            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end space-x-3 md:space-x-4 bg-white">
+                <button onclick="closeModal('delete-modal')" class="px-5 py-2.5 md:px-6 md:py-3 text-base md:text-lg text-mocha-600 bg-mocha-50 rounded-xl hover:bg-mocha-100 transition font-bold border border-mocha-200 flex-1 md:flex-none">保留</button>
+                <button onclick="confirmDeleteAction()" class="px-5 py-2.5 md:px-6 md:py-3 text-base md:text-lg text-white bg-red-600 rounded-xl hover:bg-red-700 transition font-bold shadow-md flex items-center justify-center flex-1 md:flex-none">
+                    <i class="fa-solid fa-trash mr-2"></i>捨棄
                 </button>
             </div>
         </div>
     </div>
 
     <!-- 訊息提示 (Toast) -->
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 translate-y-32 opacity-0 transition-all duration-300 px-8 py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-4">
-        <i id="toast-icon" class="fa-solid text-xl"></i>
-        <span id="toast-message" class="text-lg font-bold tracking-wide">操作成功！</span>
+    <div id="toast" class="fixed bottom-[80px] md:bottom-10 left-1/2 transform -translate-x-1/2 translate-y-32 opacity-0 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-3 md:space-x-4">
+        <i id="toast-icon" class="fa-solid text-lg md:text-xl"></i>
+        <span id="toast-message" class="text-base md:text-lg font-bold tracking-wide">操作成功！</span>
     </div>
 
     <script>
@@ -289,7 +316,6 @@
         // ==========================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR9A2BZDZM7mtG12iz6ra2zFZKO-YX4zU2GFsJ93xAN4e8nYTFarSlBTC3FK7tnkcM/exec";
         
-        // 預設資料夾 ID
         const DEFAULT_FOLDER_ID = "155vRl7rDF-acfHXo0vbkDRt-ZQhQRNqO";
         
         let filesData = [];
@@ -300,6 +326,22 @@
             setupAutoFilenamePreview();
             syncDrive();
         };
+
+        // 手機版分頁切換功能
+        function switchMobileTab(tab) {
+            document.body.setAttribute('data-mobile-tab', tab);
+            
+            // 更新按鈕樣式
+            document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+                btn.classList.remove('text-sage-600', 'font-bold');
+                btn.classList.add('text-mocha-400', 'font-medium');
+            });
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-mocha-400', 'font-medium');
+                activeBtn.classList.add('text-sage-600', 'font-bold');
+            }
+        }
 
         function getFolderId() {
             return localStorage.getItem('htmlManager_folderId') || DEFAULT_FOLDER_ID;
@@ -409,6 +451,8 @@
                     closeModal('file-modal');
                     showToast('作品已妥善收藏！', 'success');
                     syncDrive();
+                    // 手機版儲存後自動跳回書櫃頁
+                    if(window.innerWidth < 768) switchMobileTab('files');
                 } else {
                     showToast('歸檔失敗：' + response.error, 'error');
                 }
@@ -517,19 +561,23 @@
                 const count = cat === 'all' ? filesData.length : filesData.filter(f => f.category === cat).length;
                 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left px-5 py-4 rounded-xl mb-1.5 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-sage-50 text-sage-700 font-bold shadow-[inset_6px_0_0_#7e9e8c]' : 'text-mocha-600 hover:bg-mocha-50/80 font-medium'}`;
+                btn.className = `w-full text-left px-5 py-4 rounded-xl mb-2 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-sage-50 text-sage-700 font-bold shadow-[inset_6px_0_0_#7e9e8c]' : 'text-mocha-600 hover:bg-mocha-50/80 font-medium'}`;
                 btn.onclick = () => {
                     currentCategory = cat;
                     document.getElementById('current-category-title').innerText = title;
                     renderApp();
+                    // 手機版點擊分類後，自動跳轉回書櫃頁面看結果
+                    if(window.innerWidth < 768) {
+                        switchMobileTab('files');
+                    }
                 };
                 
                 const iconColor = isSelected ? 'text-sage-600' : 'text-mocha-400 group-hover:text-mocha-500';
                 const badgeClass = isSelected ? 'bg-sage-100 text-sage-800' : 'bg-mocha-100/80 text-mocha-600';
                 const icon = cat === 'all' ? 'fa-mug-hot' : 'fa-bookmark';
 
-                btn.innerHTML = `<span class="text-lg flex items-center"><i class="fa-solid ${icon} w-6 text-center mr-3 ${iconColor} transition-transform group-hover:-rotate-6 text-xl"></i>${title}</span>
-                                 <span class="text-sm ${badgeClass} py-1 px-3 rounded-full font-bold">${count}</span>`;
+                btn.innerHTML = `<span class="text-lg md:text-xl flex items-center"><i class="fa-solid ${icon} w-7 text-center mr-3 ${iconColor} transition-transform group-hover:-rotate-6 text-xl md:text-2xl"></i>${title}</span>
+                                 <span class="text-sm md:text-base ${badgeClass} py-1 px-3.5 rounded-full font-bold">${count}</span>`;
                 list.appendChild(btn);
             });
         }
@@ -542,9 +590,9 @@
 
             if(files.length === 0) {
                 container.innerHTML = `
-                    <div class="col-span-full py-32 flex flex-col items-center justify-center text-mocha-300 relative">
-                        <i class="fa-solid fa-mug-hot text-[6rem] mb-6 opacity-40 float-anim"></i>
-                        <p class="text-2xl font-bold tracking-wide">目前沒有收藏任何作品，來杯咖啡吧！</p>
+                    <div class="col-span-full py-20 md:py-32 flex flex-col items-center justify-center text-mocha-300 relative">
+                        <i class="fa-solid fa-mug-hot text-[5rem] md:text-[6rem] mb-6 opacity-40 float-anim"></i>
+                        <p class="text-xl md:text-2xl font-bold tracking-wide text-center">這個風味目前沒有作品<br>來調製一杯吧！</p>
                     </div>`;
                 return;
             }
@@ -554,11 +602,11 @@
                 const desc = extractDescription(file.content) || "尚未填寫內容簡介...";
 
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-3xl shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-mocha-100 transition-all duration-300 p-7 flex flex-col group relative overflow-hidden';
+                card.className = 'bg-white rounded-3xl shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-mocha-100 transition-all duration-300 p-6 md:p-8 flex flex-col group relative overflow-hidden';
                 
                 // 浮水印圖案
                 const watermark = document.createElement('i');
-                watermark.className = 'fa-solid fa-mug-saucer absolute -right-6 -bottom-6 text-[10rem] text-mocha-50 opacity-40 group-hover:opacity-60 group-hover:-rotate-12 transition-all duration-500 z-0 pointer-events-none';
+                watermark.className = 'fa-solid fa-mug-saucer absolute -right-4 -bottom-4 md:-right-6 md:-bottom-6 text-[8rem] md:text-[10rem] text-mocha-50 opacity-40 group-hover:opacity-60 group-hover:-rotate-12 transition-all duration-500 z-0 pointer-events-none';
                 card.appendChild(watermark);
 
                 // 左側裝飾線
@@ -569,21 +617,21 @@
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
                         <div class="flex justify-between items-start mb-5">
-                            <span class="text-sm font-bold tracking-wider px-3.5 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100"><i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>${file.category}</span>
-                            <div class="opacity-0 group-hover:opacity-100 transition-opacity space-x-1.5 flex items-center bg-white rounded-xl p-1.5 shadow-sm border border-mocha-100">
-                                <button onclick="downloadFile('${file.id}')" class="w-10 h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition" title="外帶下載"><i class="fa-solid fa-download text-base"></i></button>
-                                <button onclick="openModal('edit', '${file.id}')" class="w-10 h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition" title="編輯內容"><i class="fa-solid fa-pen text-base"></i></button>
-                                <button onclick="deleteFile('${file.id}', '${fName}')" class="w-10 h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition" title="捨棄"><i class="fa-solid fa-trash text-base"></i></button>
+                            <span class="text-sm md:text-base font-bold tracking-wider px-3.5 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100"><i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>${file.category}</span>
+                            <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity space-x-1.5 flex items-center bg-white rounded-xl p-1.5 shadow-sm border border-mocha-100">
+                                <button onclick="downloadFile('${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition" title="外帶下載"><i class="fa-solid fa-download text-base md:text-lg"></i></button>
+                                <button onclick="openModal('edit', '${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition" title="編輯內容"><i class="fa-solid fa-pen text-base md:text-lg"></i></button>
+                                <button onclick="deleteFile('${file.id}', '${fName}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition" title="捨棄"><i class="fa-solid fa-trash text-base md:text-lg"></i></button>
                             </div>
                         </div>
-                        <h3 class="text-2xl font-bold text-mocha-900 mb-2 truncate" title="${file.name}">${file.name}</h3>
-                        <p class="text-base text-mocha-500 mb-5 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2.5 text-lg"></i> ${file.developer}</p>
+                        <h3 class="text-2xl md:text-3xl font-bold text-mocha-900 mb-2 truncate" title="${file.name}">${file.name}</h3>
+                        <p class="text-base md:text-lg text-mocha-500 mb-5 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2.5 text-lg"></i> ${file.developer}</p>
                         
                         <div class="mb-8 flex-1">
-                            <p class="text-base text-mocha-700 line-clamp-2 leading-relaxed" title="${desc}">${desc}</p>
+                            <p class="text-base md:text-lg text-mocha-700 line-clamp-2 leading-relaxed" title="${desc}">${desc}</p>
                         </div>
 
-                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-lg py-3.5 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
+                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-lg md:text-xl py-3.5 md:py-4 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
                             <i class="fa-solid fa-mug-hot mr-2.5 group-hover/btn:animate-pulse"></i> 品味網頁
                         </button>
                     </div>
@@ -694,14 +742,14 @@
             const text = document.getElementById('toast-message');
             
             text.innerText = msg;
-            toast.className = `fixed bottom-10 left-1/2 transform -translate-x-1/2 transition-all duration-300 px-8 py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-4 text-white`;
+            toast.className = `fixed bottom-[90px] md:bottom-10 left-1/2 transform -translate-x-1/2 transition-all duration-300 px-6 py-3.5 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.2)] z-[100] flex items-center space-x-3 md:space-x-4 text-white w-max max-w-[90vw]`;
             
             if(type === 'success') {
                 toast.classList.add('bg-sage-600');
-                icon.className = 'fa-solid fa-check text-base bg-white/20 p-2 rounded-full';
+                icon.className = 'fa-solid fa-check text-base md:text-lg bg-white/20 p-2 rounded-full';
             } else {
                 toast.classList.add('bg-mocha-800');
-                icon.className = 'fa-solid fa-exclamation text-base bg-white/20 p-2 rounded-full px-3';
+                icon.className = 'fa-solid fa-exclamation text-base md:text-lg bg-white/20 p-2 rounded-full px-3';
             }
             
             toast.classList.remove('translate-y-32', 'opacity-0');
