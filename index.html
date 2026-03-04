@@ -561,7 +561,8 @@
                 const count = cat === 'all' ? filesData.length : filesData.filter(f => f.category === cat).length;
                 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left px-5 py-4 rounded-xl mb-2 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-sage-50 text-sage-700 font-bold shadow-[inset_6px_0_0_#7e9e8c]' : 'text-mocha-600 hover:bg-mocha-50/80 font-medium'}`;
+                // 緊湊化：內距與邊距縮小，防止側邊欄出現捲動條
+                btn.className = `w-full text-left px-4 py-3 rounded-xl mb-1 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-sage-50 text-sage-700 font-bold shadow-[inset_6px_0_0_#7e9e8c]' : 'text-mocha-600 hover:bg-mocha-50/80 font-medium'}`;
                 btn.onclick = () => {
                     currentCategory = cat;
                     document.getElementById('current-category-title').innerText = title;
@@ -576,8 +577,8 @@
                 const badgeClass = isSelected ? 'bg-sage-100 text-sage-800' : 'bg-mocha-100/80 text-mocha-600';
                 const icon = cat === 'all' ? 'fa-mug-hot' : 'fa-bookmark';
 
-                btn.innerHTML = `<span class="text-lg md:text-xl flex items-center"><i class="fa-solid ${icon} w-7 text-center mr-3 ${iconColor} transition-transform group-hover:-rotate-6 text-xl md:text-2xl"></i>${title}</span>
-                                 <span class="text-sm md:text-base ${badgeClass} py-1 px-3.5 rounded-full font-bold">${count}</span>`;
+                btn.innerHTML = `<span class="text-base md:text-lg flex items-center"><i class="fa-solid ${icon} w-6 text-center mr-2 ${iconColor} transition-transform group-hover:-rotate-6 text-lg md:text-xl"></i>${title}</span>
+                                 <span class="text-xs md:text-sm ${badgeClass} py-0.5 px-2.5 rounded-full font-bold">${count}</span>`;
                 list.appendChild(btn);
             });
         }
@@ -616,22 +617,25 @@
 
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
-                        <div class="flex justify-between items-start mb-5">
-                            <span class="text-sm md:text-base font-bold tracking-wider px-3.5 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100"><i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>${file.category}</span>
-                            <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity space-x-1.5 flex items-center bg-white rounded-xl p-1.5 shadow-sm border border-mocha-100">
+                        <div class="flex justify-between items-start mb-5 gap-2">
+                            <div class="inline-flex items-center text-sm md:text-base font-bold tracking-wider px-3.5 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100 min-w-0">
+                                <i class="fa-solid fa-tag text-mocha-400 mr-1.5 flex-shrink-0"></i>
+                                <span class="truncate">${file.category}</span>
+                            </div>
+                            <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity space-x-1.5 flex items-center bg-white rounded-xl p-1.5 shadow-sm border border-mocha-100 flex-shrink-0">
                                 <button onclick="downloadFile('${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition" title="外帶下載"><i class="fa-solid fa-download text-base md:text-lg"></i></button>
                                 <button onclick="openModal('edit', '${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition" title="編輯內容"><i class="fa-solid fa-pen text-base md:text-lg"></i></button>
                                 <button onclick="deleteFile('${file.id}', '${fName}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition" title="捨棄"><i class="fa-solid fa-trash text-base md:text-lg"></i></button>
                             </div>
                         </div>
-                        <h3 class="text-2xl md:text-3xl font-bold text-mocha-900 mb-2 truncate" title="${file.name}">${file.name}</h3>
-                        <p class="text-base md:text-lg text-mocha-500 mb-5 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2.5 text-lg"></i> ${file.developer}</p>
+                        <h3 class="text-lg md:text-xl font-bold text-mocha-900 mb-2 line-clamp-2" title="${file.name}">${file.name}</h3>
+                        <p class="text-sm md:text-base text-mocha-500 mb-4 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2 text-base"></i> ${file.developer}</p>
                         
-                        <div class="mb-8 flex-1">
-                            <p class="text-base md:text-lg text-mocha-700 line-clamp-2 leading-relaxed" title="${desc}">${desc}</p>
+                        <div class="mb-5 flex-1 overflow-y-auto h-20 pr-2">
+                            <p class="text-sm md:text-base text-mocha-700 leading-relaxed whitespace-pre-wrap">${desc}</p>
                         </div>
 
-                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-lg md:text-xl py-3.5 md:py-4 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
+                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-base md:text-lg py-3 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
                             <i class="fa-solid fa-mug-hot mr-2.5 group-hover/btn:animate-pulse"></i> 品味網頁
                         </button>
                     </div>
