@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 網頁分類管理器 (GitHub版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* 載入中遮罩 */
+        #loader { display: none; }
+        body.loading #loader { display: flex; }
+        
+        /* 全螢幕時的 iframe 樣式確保填滿 */
+        #preview-frame:fullscreen { background-color: white; width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
+
+    <!-- 全局載入中遮罩 -->
+    <div id="loader" class="fixed inset-0 bg-white bg-opacity-80 z-[999] flex-col items-center justify-center fade-in">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-blue-600 mb-4"></i>
+        <p class="text-lg font-bold text-gray-700 mt-4" id="loader-text">與 Google Drive 同步中...</p>
+    </div>
+
+    <!-- 左側分類導覽列 -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-10">
+        <div class="p-5 border-b border-gray-200 flex items-center space-x-3">
+            <div class="bg-gray-800 text-white p-2 rounded-lg">
+                <i class="fa-brands fa-github"></i>
+            </div>
+            <h1 class="text-xl font-bold text-gray-700">雲端網頁管理</h1>
+        </div>
+        <div class="p-4 flex-1 overflow-y-auto" id="category-list">
+            <!-- 分類列表 -->
+        </div>
+        <div class="p-4 border-t border-gray-200 space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">綁定資料夾 ID</label>
+                <input type="text" id="folder-id" value="155vRl7rDF-acfHXo0vbkDRt-ZQhQRNqO" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500" title="可更換其他資料夾 ID">
+            </div>
+            <button onclick="syncDrive()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-rotate"></i>
+                <span>從雲端重新載入</span>
+            </button>
+            <button onclick="openModal('add')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-plus"></i>
+                <span>新增雲端網頁</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- 右側主要內容區 -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden">
+        <header class="bg-white p-5 border-b border-gray-200 shadow-sm flex justify-between items-center z-0">
+            <h2 class="text-2xl font-bold text-gray-800" id="current-category-title">全部網頁</h2>
+            <div class="text-sm text-gray-500" id="file-count">共 0 個檔案</div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="files-container">
+            </div>
+        </div>
+    </main>
+
+    <!-- 新增/修改 Modal -->
+    <div id="file-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
+            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center"><i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-2"></i> <span id="modal-title">新增網頁</span></h3>
+                <button onclick="closeModal('file-modal')" class="text-gray-500 hover:text-red-500 transition">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 flex-1 overflow-y-auto">
+                <form id="file-form" class="space-y-4">
+                    <input type="hidden" id="file-id">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">類別</label>
+                            <input type="text" id="file-category" required class="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">網頁名稱</label>
+                            <input type="text" id="file-name" required class="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">開發者</label>
+                            <input type="text" id="file-developer" required class="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                        雲端檔名預覽：<strong id="preview-filename" class="text-blue-700">類別-網頁名稱-開發者.html</strong>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">HTML 程式碼</label>
+                        <textarea id="file-content" required rows="15" class="w-full border border-gray-300 rounded p-3 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="p-5 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
+                <button onclick="closeModal('file-modal')" class="px-5 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">取消</button>
+                <button id="save-btn" onclick="saveFile()" class="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">儲存至雲端</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 執行/預覽 Modal -->
+    <div id="preview-modal" class="fixed inset-0 bg-gray-900 bg-opacity-90 hidden flex-col z-[60] fade-in">
+        <div class="flex justify-between items-center p-4 bg-gray-800 text-white">
+            <h3 class="text-lg font-bold flex items-center truncate max-w-lg">
+                <i class="fa-solid fa-play text-green-400 mr-2"></i> 
+                <span id="preview-title">預覽</span>
+            </h3>
+            
+            <div class="flex items-center space-x-5">
+                <button onclick="openInNewTab()" class="text-blue-400 hover:text-white transition flex items-center space-x-1" title="在全新分頁獨立開啟">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span class="text-sm font-medium">新分頁</span>
+                </button>
+                <button onclick="toggleFullScreen()" class="text-yellow-400 hover:text-white transition flex items-center space-x-1" title="全螢幕模式 (按 Esc 退出)">
+                    <i class="fa-solid fa-expand"></i>
+                    <span class="text-sm font-medium">全螢幕</span>
+                </button>
+                <div class="h-6 w-px bg-gray-600"></div>
+                <button onclick="closeModal('preview-modal')" class="text-gray-400 hover:text-red-500 transition">
+                    <i class="fa-solid fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 bg-white relative">
+            <iframe id="preview-frame" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        </div>
+    </div>
+
+    <!-- 訊息提示 (Toast) -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-[100]">
+        <span id="toast-message">操作成功！</span>
+    </div>
+
+    <script>
+        // ==========================================
+        // Google Apps Script 正式部署網址 (已自動帶入)
+        // ==========================================
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR9A2BZDZM7mtG12iz6ra2zFZKO-YX4zU2GFsJ93xAN4e8nYTFarSlBTC3FK7tnkcM/exec";
+        
+        let filesData = [];
+        let currentCategory = 'all';
+        let currentPreviewId = null;
+
+        window.onload = () => {
+            setupAutoFilenamePreview();
+            syncDrive();
+        };
+
+        // GitHub 版：使用 fetch 呼叫 GAS API 取得檔案
+        function syncDrive() {
+            const folderId = document.getElementById('folder-id').value;
+            if (!folderId) return showToast('請輸入資料夾 ID', 'error');
+            
+            showLoader('正在從 Google Drive 載入檔案...');
+
+            fetch(`${GAS_API_URL}?action=getFiles&folderId=${folderId}`)
+                .then(res => res.json())
+                .then(response => {
+                    hideLoader();
+                    if (response.success) {
+                        filesData = response.data;
+                        renderApp();
+                        showToast(`成功載入 ${filesData.length} 個檔案！`);
+                    } else {
+                        showToast('載入失敗：' + response.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoader();
+                    console.error('Fetch 錯誤:', error);
+                    showToast('網路連線錯誤，請確認 GAS 是否設定為「所有人」存取！', 'error');
+                });
+        }
+
+        // GitHub 版：使用 fetch 儲存檔案
+        function saveFile() {
+            const form = document.getElementById('file-form');
+            if (!form.checkValidity()) return form.reportValidity();
+
+            const payload = {
+                action: 'saveFile',
+                folderId: document.getElementById('folder-id').value,
+                fileId: document.getElementById('file-id').value,
+                category: document.getElementById('file-category').value.trim(),
+                name: document.getElementById('file-name').value.trim(),
+                developer: document.getElementById('file-developer').value.trim(),
+                content: document.getElementById('file-content').value
+            };
+
+            showLoader('正在儲存至 Google Drive...');
+            document.getElementById('save-btn').disabled = true;
+
+            // 使用 text/plain 避免觸發 CORS preflight
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(response => {
+                hideLoader();
+                document.getElementById('save-btn').disabled = false;
+                if (response.success) {
+                    closeModal('file-modal');
+                    showToast('檔案已成功儲存至雲端！');
+                    syncDrive();
+                } else {
+                    showToast('儲存失敗：' + response.error, 'error');
+                }
+            })
+            .catch(error => {
+                hideLoader();
+                document.getElementById('save-btn').disabled = false;
+                console.error('Fetch 錯誤:', error);
+                showToast('發生系統錯誤，請確認 GAS 權限設定', 'error');
+            });
+        }
+
+        // GitHub 版：使用 fetch 刪除檔案
+        function deleteFile(id, fileName) {
+            if (!confirm(`確定要將 ${fileName} 移至垃圾桶嗎？此操作會直接影響雲端檔案。`)) return;
+
+            showLoader('正在刪除雲端檔案...');
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'deleteFile', fileId: id })
+            })
+            .then(res => res.json())
+            .then(response => {
+                hideLoader();
+                if (response.success) {
+                    showToast('檔案已移至垃圾桶。');
+                    syncDrive();
+                } else {
+                    showToast('刪除失敗：' + response.error, 'error');
+                }
+            })
+            .catch(error => {
+                hideLoader();
+                console.error('Fetch 錯誤:', error);
+                showToast('發生系統錯誤，無法刪除檔案', 'error');
+            });
+        }
+
+        // UI 渲染邏輯
+        function renderApp() {
+            renderCategories();
+            renderFiles();
+        }
+
+        function renderCategories() {
+            const list = document.getElementById('category-list');
+            const categories = ['all', ...new Set(filesData.map(f => f.category))];
+            list.innerHTML = '';
+            
+            categories.forEach(cat => {
+                const isSelected = currentCategory === cat;
+                const title = cat === 'all' ? '全部網頁' : cat;
+                const count = cat === 'all' ? filesData.length : filesData.filter(f => f.category === cat).length;
+                
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left px-4 py-3 rounded-lg mb-2 flex items-center justify-between transition ${isSelected ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-600 hover:bg-gray-100'}`;
+                btn.onclick = () => {
+                    currentCategory = cat;
+                    document.getElementById('current-category-title').innerText = title;
+                    renderApp();
+                };
+                btn.innerHTML = `<span><i class="fa-solid ${cat === 'all' ? 'fa-layer-group' : 'fa-folder'} mr-2"></i>${title}</span>
+                                 <span class="text-xs bg-gray-200 text-gray-600 py-1 px-2 rounded-full">${count}</span>`;
+                list.appendChild(btn);
+            });
+        }
+
+        function renderFiles() {
+            const container = document.getElementById('files-container');
+            const files = currentCategory === 'all' ? filesData : filesData.filter(f => f.category === currentCategory);
+            document.getElementById('file-count').innerText = `共 ${files.length} 個檔案`;
+            container.innerHTML = '';
+
+            if(files.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-10 text-center text-gray-400">沒有找到檔案</div>`;
+                return;
+            }
+
+            files.forEach(file => {
+                const fName = `${file.category}-${file.name}-${file.developer}.html`;
+                const card = document.createElement('div');
+                card.className = 'bg-white border rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col group';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 rounded">${file.category}</span>
+                        <div class="opacity-0 group-hover:opacity-100 transition space-x-2">
+                            <button onclick="openModal('edit', '${file.id}')" class="text-gray-400 hover:text-blue-500"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteFile('${file.id}', '${fName}')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1 truncate">${file.name}</h3>
+                    <p class="text-sm text-gray-500 mb-4"><i class="fa-solid fa-user-circle"></i> ${file.developer}</p>
+                    <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-green-50 text-green-700 py-2 rounded-lg border border-green-200 hover:bg-green-100 transition flex items-center justify-center">
+                        <i class="fa-solid fa-play mr-2"></i> 執行預覽
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function setupAutoFilenamePreview() {
+            const updatePreview = () => {
+                const c = document.getElementById('file-category').value.trim() || '類別';
+                const n = document.getElementById('file-name').value.trim() || '網頁名稱';
+                const d = document.getElementById('file-developer').value.trim() || '開發者';
+                document.getElementById('preview-filename').innerText = `${c}-${n}-${d}.html`;
+            };
+            ['file-category', 'file-name', 'file-developer'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updatePreview);
+            });
+        }
+
+        function openModal(mode, id = null) {
+            const modal = document.getElementById('file-modal');
+            document.getElementById('file-form').reset();
+            
+            if (mode === 'add') {
+                document.getElementById('modal-title').innerText = '新增雲端網頁';
+                document.getElementById('file-id').value = '';
+                document.getElementById('preview-filename').innerText = '類別-網頁名稱-開發者.html';
+            } else if (mode === 'edit' && id) {
+                document.getElementById('modal-title').innerText = '編輯雲端網頁';
+                const file = filesData.find(f => f.id === id);
+                if (file) {
+                    document.getElementById('file-id').value = file.id;
+                    document.getElementById('file-category').value = file.category;
+                    document.getElementById('file-name').value = file.name;
+                    document.getElementById('file-developer').value = file.developer;
+                    document.getElementById('file-content').value = file.content;
+                    document.getElementById('preview-filename').innerText = `${file.category}-${file.name}-${file.developer}.html`;
+                }
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
+            
+            if(id === 'preview-modal') {
+                document.getElementById('preview-frame').srcdoc = '';
+                currentPreviewId = null;
+                if (document.fullscreenElement) document.exitFullscreen();
+            }
+        }
+
+        function runFile(id) {
+            const file = filesData.find(f => f.id === id);
+            if (!file) return;
+            currentPreviewId = id;
+            
+            document.getElementById('preview-title').innerText = `${file.category}-${file.name}-${file.developer}.html`;
+            document.getElementById('preview-frame').srcdoc = file.content;
+            document.getElementById('preview-modal').classList.remove('hidden');
+            document.getElementById('preview-modal').classList.add('flex');
+        }
+
+        function toggleFullScreen() {
+            const iframe = document.getElementById('preview-frame');
+            if (!document.fullscreenElement) {
+                if (iframe.requestFullscreen) iframe.requestFullscreen();
+                else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+                else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function openInNewTab() {
+            if (!currentPreviewId) return;
+            const file = filesData.find(f => f.id === currentPreviewId);
+            if (!file) return;
+
+            const newWin = window.open('', '_blank');
+            if (newWin) {
+                newWin.document.open();
+                newWin.document.write(file.content);
+                newWin.document.close();
+                newWin.document.title = `${file.category}-${file.name}-${file.developer}.html`;
+            } else {
+                showToast('請允許瀏覽器彈出視窗以開啟新分頁', 'error');
+            }
+        }
+
+        function showLoader(text) {
+            document.getElementById('loader-text').innerText = text;
+            document.body.classList.add('loading');
+        }
+
+        function hideLoader() {
+            document.body.classList.remove('loading');
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = `fixed bottom-5 right-5 transform transition-all duration-300 px-6 py-3 rounded-lg shadow-lg z-[100] ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+    </script>
+</body>
+</html>
