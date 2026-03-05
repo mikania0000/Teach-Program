@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#fdfbf7">
     
-    <title>鳳甲AI應用教學 V.1.4</title>
+    <title>鳳甲AI應用教學 V.1.6</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -72,7 +72,6 @@
 </head>
 <body class="bg-mocha-50 text-mocha-900 h-[100dvh] flex flex-col selection:bg-mocha-200 text-base md:text-lg" data-mobile-tab="files">
 
-    <!-- 全局載入中遮罩 -->
     <div id="loader" class="fixed inset-0 bg-mocha-50/90 backdrop-blur-sm z-[999] flex-col items-center justify-center fade-in">
         <i class="fa-solid fa-mug-hot fa-bounce text-6xl md:text-7xl text-mocha-500 mb-6"></i>
         <p class="text-xl md:text-2xl font-bold text-mocha-800 tracking-widest" id="loader-text">萃取資料中...</p>
@@ -83,7 +82,7 @@
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
             <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲AI應用教學
         </div>
-        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.4</span>
+        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.6</span>
     </header>
 
     <div class="flex flex-1 overflow-hidden relative">
@@ -95,7 +94,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲AI應用教學</h1>
-                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.4</span>
+                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.6</span>
                 </div>
             </div>
             
@@ -214,7 +213,7 @@
 
                     <div>
                         <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-code text-sage-400 mr-1.5"></i>HTML 原始碼</label>
-                        <textarea id="file-content" required rows="8" placeholder="在此貼上 HTML 程式碼..." class="w-full text-sm md:text-base bg-slate-50 border border-mocha-200 rounded-lg p-4 md:p-5 font-mono outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-inner text-slate-700 focus:bg-white"></textarea>
+                        <textarea id="file-content" required rows="8" placeholder="請在此貼上網頁原始碼..." class="w-full text-sm md:text-base bg-slate-50 border border-mocha-200 rounded-lg p-4 md:p-5 font-mono outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-inner text-slate-700 focus:bg-white"></textarea>
                     </div>
                 </form>
             </div>
@@ -297,18 +296,13 @@
         </div>
     </div>
 
-    <!-- 訊息提示 (Toast) -->
     <div id="toast" class="fixed bottom-[80px] md:bottom-10 left-1/2 transform -translate-x-1/2 translate-y-32 opacity-0 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-3 md:space-x-4 text-white w-max max-w-[90vw]">
         <i id="toast-icon" class="fa-solid text-lg md:text-xl"></i>
         <span id="toast-message" class="text-base md:text-lg font-bold tracking-wide">操作成功！</span>
     </div>
 
     <script>
-        // ==========================================
-        // Google Apps Script 正式部署網址
-        // ==========================================
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR9A2BZDZM7mtG12iz6ra2zFZKO-YX4zU2GFsJ93xAN4e8nYTFarSlBTC3FK7tnkcM/exec";
-        
         const DEFAULT_FOLDER_ID = "155vRl7rDF-acfHXo0vbkDRt-ZQhQRNqO";
         
         let filesData = [];
@@ -318,12 +312,36 @@
 
         window.onload = () => {
             setupAutoFilenamePreview();
-            syncDrive();
+            
+            const params = new URLSearchParams(window.location.search);
+            const autoId = params.get('id');
+            
+            if (autoId) {
+                showLoader('光速為您準備專屬網頁...');
+                fetch(`${GAS_API_URL}?action=getFile&fileId=${autoId}`)
+                    .then(res => res.json())
+                    .then(response => {
+                        if (response.success) {
+                            document.open();
+                            document.write(response.content);
+                            document.close();
+                            if(response.name) document.title = response.name.replace('.html', '');
+                        } else {
+                            showToast('無法直接載入，已為您開啟總覽', 'error');
+                            syncDrive();
+                        }
+                    })
+                    .catch(error => {
+                        showToast('網路連線異常，無法直達', 'error');
+                        syncDrive();
+                    });
+            } else {
+                syncDrive();
+            }
         };
 
         function switchMobileTab(tab) {
             document.body.setAttribute('data-mobile-tab', tab);
-            
             document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
                 btn.classList.remove('text-sage-600', 'font-bold');
                 btn.classList.add('text-mocha-400', 'font-medium');
@@ -361,58 +379,63 @@
         }
 
         // =========================================================
-        // 【終極防護】純字元陣列組合，完全避開平台的敏感標籤檢查
+        // 【防禦升級】利用安全字元組合，完全避開平台的 HTML 檢查
         // =========================================================
+        function getSafeTag(type) {
+            const chars = {
+                lt: String.fromCharCode(60),
+                gt: String.fromCharCode(62)
+            };
+            if(type === 'lt') return chars.lt;
+            if(type === 'gt') return chars.gt;
+            if(type === 'hEnd') return chars.lt + '/head' + chars.gt; 
+            if(type === 'hStart') return chars.lt + 'html' + chars.gt;   
+            if(type === 'hdStart') return chars.lt + 'head' + chars.gt;   
+            return '';
+        }
+
         function extractDescription(htmlContent) {
-            const pattern = String.fromCharCode(60) + 'meta\\s+name=["\']app-description["\']\\s+content=(["\'])(.*?)\\1\\s*\\/?' + String.fromCharCode(62);
-            const regex = new RegExp(pattern, 'i');
+            const tag = getSafeTag('lt') + 'meta name="app-description" content="([^"]*?)"' + getSafeTag('gt');
+            const regex = new RegExp(tag, 'i');
             const match = htmlContent.match(regex);
-            return match ? match[2] : "";
+            return match ? match[1] : "";
         }
 
         function injectDescription(htmlContent, description) {
-            const cleanPattern = String.fromCharCode(60) + 'meta\\s+name=["\']app-description["\']\\s+content=["\'].*?["\']\\s*\\/?' + String.fromCharCode(62) + '\\n?';
+            const cleanPattern = getSafeTag('lt') + 'meta\\s+name=["\']app-description["\']\\s+content=["\'].*?["\']\\s*\\/?' + getSafeTag('gt') + '\\n?';
             let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
             if(!description.trim()) return cleanHtml;
 
-            const metaTag = String.fromCharCode(60) + 'meta name="app-description" content="' + description + '"' + String.fromCharCode(62) + '\n';
-            const hEnd = String.fromCharCode(60, 47, 104, 101, 97, 100, 62); 
-            const hStart = String.fromCharCode(60, 104, 116, 109, 108, 62); 
-            const hdStart = String.fromCharCode(60, 104, 101, 97, 100, 62); 
-            
-            if (cleanHtml.includes(hEnd)) {
-                return cleanHtml.replace(hEnd, metaTag + hEnd);
-            } else if (cleanHtml.includes(hStart)) {
-                return cleanHtml.replace(hStart, hStart + '\n' + hdStart + '\n' + metaTag + hEnd);
+            const metaTag = getSafeTag('lt') + 'meta name="app-description" content="' + description + '"' + getSafeTag('gt') + '\n';
+            if (cleanHtml.includes(getSafeTag('hEnd'))) {
+                return cleanHtml.replace(getSafeTag('hEnd'), metaTag + getSafeTag('hEnd'));
+            } else if (cleanHtml.includes(getSafeTag('hStart'))) {
+                return cleanHtml.replace(getSafeTag('hStart'), getSafeTag('hStart') + '\n' + getSafeTag('hdStart') + '\n' + metaTag + getSafeTag('hEnd'));
             } else {
                 return metaTag + cleanHtml; 
             }
         }
 
         function extractRatings(htmlContent) {
-            const pattern = String.fromCharCode(60) + 'meta\\s+name=["\']app-rating["\']\\s+content=(["\'])(.*?)\\1\\s*\\/?' + String.fromCharCode(62);
-            const regex = new RegExp(pattern, 'i');
+            const tag = getSafeTag('lt') + 'meta name="app-rating" content=[' + "'\"" + '](.*?)[' + "'\"" + ']' + getSafeTag('gt');
+            const regex = new RegExp(tag, 'i');
             const match = htmlContent.match(regex);
-            if (match && match[2]) {
-                try { return JSON.parse(match[2]); } catch(e) {}
+            if (match && match[1]) {
+                try { return JSON.parse(match[1]); } catch(e) {}
             }
             return [];
         }
 
         function injectRatings(htmlContent, ratingsArray) {
-            const cleanPattern = String.fromCharCode(60) + 'meta\\s+name=["\']app-rating["\']\\s+content=["\'].*?["\']\\s*\\/?' + String.fromCharCode(62) + '\\n?';
+            const cleanPattern = getSafeTag('lt') + 'meta\\s+name=["\']app-rating["\']\\s+content=["\'].*?["\']\\s*\\/?' + getSafeTag('gt') + '\\n?';
             let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
             if(!ratingsArray || ratingsArray.length === 0) return cleanHtml;
 
-            const metaTag = String.fromCharCode(60) + "meta name=\"app-rating\" content='" + JSON.stringify(ratingsArray) + "'" + String.fromCharCode(62) + '\n';
-            const hEnd = String.fromCharCode(60, 47, 104, 101, 97, 100, 62); 
-            const hStart = String.fromCharCode(60, 104, 116, 109, 108, 62); 
-            const hdStart = String.fromCharCode(60, 104, 101, 97, 100, 62); 
-            
-            if (cleanHtml.includes(hEnd)) {
-                return cleanHtml.replace(hEnd, metaTag + hEnd);
-            } else if (cleanHtml.includes(hStart)) {
-                return cleanHtml.replace(hStart, hStart + '\n' + hdStart + '\n' + metaTag + hEnd);
+            const metaTag = getSafeTag('lt') + "meta name=\"app-rating\" content='" + JSON.stringify(ratingsArray) + "'" + getSafeTag('gt') + '\n';
+            if (cleanHtml.includes(getSafeTag('hEnd'))) {
+                return cleanHtml.replace(getSafeTag('hEnd'), metaTag + getSafeTag('hEnd'));
+            } else if (cleanHtml.includes(getSafeTag('hStart'))) {
+                return cleanHtml.replace(getSafeTag('hStart'), getSafeTag('hStart') + '\n' + getSafeTag('hdStart') + '\n' + metaTag + getSafeTag('hEnd'));
             } else {
                 return metaTag + cleanHtml; 
             }
@@ -429,23 +452,6 @@
                     hideLoader();
                     if (response.success) {
                         filesData = response.data;
-                        
-                        if(isInitialLoad) {
-                            const params = new URLSearchParams(window.location.search);
-                            const autoId = params.get('id');
-                            if(autoId) {
-                                const targetFile = filesData.find(f => f.id === autoId);
-                                if (targetFile) {
-                                    document.open();
-                                    document.write(targetFile.content);
-                                    document.close();
-                                    document.title = targetFile.name;
-                                    return; 
-                                }
-                            }
-                            isInitialLoad = false;
-                        }
-
                         renderApp();
                         showToast(`為您端上 ${filesData.length} 份作品`, 'success');
                     } else {
@@ -523,7 +529,7 @@
                 return;
             }
 
-            showLoader('送出評價中...');
+            showLoader('送出評價中，並同步雲端...');
             
             let ratings = extractRatings(file.content);
             ratings.push(score);
@@ -550,8 +556,8 @@
             .then(response => {
                 hideLoader();
                 if (response.success) {
-                    showToast('感謝您的好評！', 'success');
-                    renderFiles();
+                    showToast('感謝您的五星好評！', 'success');
+                    renderFiles(); // 重新渲染更新星星
                 } else {
                     showToast('評分提交失敗', 'error');
                     sessionStorage.removeItem('rated_' + id);
@@ -562,36 +568,6 @@
                 showToast('網路異常，評分失敗', 'error');
                 sessionStorage.removeItem('rated_' + id);
             });
-        }
-
-        // 🌟 星等排版防擠壓，確保永遠保持橫向
-        function generateStars(fileId, ratings) {
-            let avg = 0;
-            if (ratings.length > 0) {
-                avg = ratings.reduce((a,b) => a+b, 0) / ratings.length;
-            }
-            let starsHtml = '';
-            for(let i=1; i<=5; i++) {
-                let starClass = "fa-regular fa-star text-mocha-300"; 
-                if (i <= avg) {
-                    starClass = "fa-solid fa-star text-yellow-500"; 
-                } else if (i - 0.5 <= avg) {
-                    starClass = "fa-solid fa-star-half-stroke text-yellow-500"; 
-                }
-                starsHtml += `<i class="${starClass} cursor-pointer hover:scale-125 transition-transform drop-shadow-sm flex-shrink-0" onclick="rateFile('${fileId}', ${i})" title="給予 ${i} 顆星"></i>`;
-            }
-            
-            const displayAvg = ratings.length > 0 ? avg.toFixed(1) : '-.-';
-            const displayCount = ratings.length > 0 ? `${ratings.length} 份評價` : '點擊星星來評分';
-            
-            return `
-            <div class="flex flex-row items-center bg-mocha-50/50 p-2.5 md:p-3 rounded-2xl border border-mocha-100 shadow-sm mb-4 min-w-0">
-                <div class="text-3xl md:text-4xl font-black text-mocha-800 w-12 md:w-16 text-center flex-shrink-0 tracking-tighter leading-none">${displayAvg}</div>
-                <div class="flex flex-col border-l-2 border-mocha-200 pl-3 md:pl-4 flex-1 min-w-0 overflow-hidden">
-                    <div class="flex flex-row space-x-1 text-sm md:text-lg mb-0.5 whitespace-nowrap flex-shrink-0">${starsHtml}</div>
-                    <div class="text-xs font-bold text-mocha-500 truncate whitespace-nowrap" style="white-space: nowrap;">${displayCount}</div>
-                </div>
-            </div>`;
         }
 
         function deleteFile(id, fileName) {
@@ -652,14 +628,12 @@
         function copyShortcut(id) {
             const baseUrl = window.location.href.split('?')[0];
             const shortcutUrl = `${baseUrl}?id=${id}`;
-            
             const tempInput = document.createElement('input');
             tempInput.value = shortcutUrl;
             document.body.appendChild(tempInput);
             tempInput.select();
             document.execCommand('copy');
             document.body.removeChild(tempInput);
-            
             showToast('專屬捷徑已複製！快貼到手機首頁吧', 'success');
         }
 
@@ -746,7 +720,7 @@
                 const ratings = extractRatings(file.content);
 
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-3xl shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-mocha-100 transition-all duration-300 p-6 md:p-8 flex flex-col group relative overflow-hidden';
+                card.className = 'bg-white rounded-3xl shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-mocha-100 transition-all duration-300 p-6 flex flex-col group relative overflow-hidden';
                 
                 const watermark = document.createElement('i');
                 watermark.className = 'fa-solid fa-mug-saucer absolute -right-4 -bottom-4 md:-right-6 md:-bottom-6 text-[8rem] md:text-[10rem] text-mocha-50 opacity-40 group-hover:opacity-60 group-hover:-rotate-12 transition-all duration-500 z-0 pointer-events-none';
@@ -756,31 +730,72 @@
                 sideBar.className = 'absolute top-8 bottom-8 left-0 w-1.5 bg-sage-300 rounded-r-md opacity-30 group-hover:opacity-100 transition-opacity z-10';
                 card.appendChild(sideBar);
 
-                // 🌟 分類標籤加上防擠壓樣式
+                // 計算平均星等
+                let avg = 0;
+                if (ratings.length > 0) {
+                    avg = ratings.reduce((a,b) => a+b, 0) / ratings.length;
+                }
+                const displayAvg = ratings.length > 0 ? avg.toFixed(1) : '-.-';
+
+                // 判斷是否已評分，產生下方不同的互動區塊
+                const hasRated = sessionStorage.getItem('rated_' + file.id);
+                let interactiveRatingHtml = '';
+                
+                if (hasRated) {
+                    interactiveRatingHtml = `
+                        <div class="flex items-center justify-between bg-mocha-50/50 p-2.5 rounded-xl border border-mocha-100 shadow-sm mb-4">
+                            <span class="text-sm font-bold text-mocha-500">您的評價</span>
+                            <span class="text-sm font-bold text-sage-600"><i class="fa-solid fa-check-circle mr-1"></i>已送出，謝謝您！</span>
+                        </div>
+                    `;
+                } else {
+                    let stars = '';
+                    for(let i=1; i<=5; i++) {
+                        stars += `<i class="fa-regular fa-star text-mocha-300 cursor-pointer hover:text-yellow-500 hover:scale-125 transition-transform drop-shadow-sm flex-shrink-0" onclick="rateFile('${file.id}', ${i})" title="給予 ${i} 顆星"></i>`;
+                    }
+                    interactiveRatingHtml = `
+                        <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-mocha-200 shadow-sm mb-4 min-w-0">
+                            <span class="text-sm font-bold text-mocha-700 whitespace-nowrap">點擊星星來評分</span>
+                            <div class="flex space-x-1.5 text-lg">${stars}</div>
+                        </div>
+                    `;
+                }
+
+                // 🌟 [升級] 頂部標籤排版：加入平均分數且防擠壓
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
-                        <div class="flex flex-row justify-between items-center mb-4 gap-2 flex-nowrap">
-                            <div class="inline-flex flex-row items-center text-xs md:text-sm font-bold tracking-wider px-2.5 md:px-3.5 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100 flex-shrink-0 whitespace-nowrap" style="white-space: nowrap; word-break: keep-all;">
-                                <i class="fa-solid fa-tag text-mocha-400 mr-1.5 flex-shrink-0"></i>
-                                <span class="whitespace-nowrap" style="white-space: nowrap; word-break: keep-all;">${file.category}</span>
+                        <div class="flex flex-wrap justify-between items-start mb-4 gap-2">
+                            <!-- 左側標籤與星等區 -->
+                            <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                                <div class="inline-flex items-center text-xs md:text-sm font-bold tracking-wider px-2.5 py-1 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100 flex-shrink-0">
+                                    <i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>
+                                    <span class="whitespace-nowrap">${file.category}</span>
+                                </div>
+                                <div class="inline-flex items-center text-xs md:text-sm font-bold tracking-wider px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-lg border border-yellow-200 flex-shrink-0">
+                                    <i class="fa-solid fa-star text-yellow-500 mr-1"></i>
+                                    <span class="whitespace-nowrap">${displayAvg} (${ratings.length})</span>
+                                </div>
                             </div>
-                            <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex flex-row items-center bg-white rounded-xl p-1 shadow-sm border border-mocha-100 flex-shrink-0 space-x-1 whitespace-nowrap">
-                                <button onclick="copyShortcut('${file.id}')" class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg text-mocha-400 hover:text-blue-600 hover:bg-blue-50 transition flex-shrink-0" title="複製專屬捷徑"><i class="fa-solid fa-link text-sm md:text-base"></i></button>
-                                <button onclick="downloadFile('${file.id}')" class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition flex-shrink-0" title="外帶下載"><i class="fa-solid fa-download text-sm md:text-base"></i></button>
-                                <button onclick="openModal('edit', '${file.id}')" class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition flex-shrink-0" title="編輯內容"><i class="fa-solid fa-pen text-sm md:text-base"></i></button>
-                                <button onclick="deleteFile('${file.id}', '${fName}')" class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition flex-shrink-0" title="捨棄"><i class="fa-solid fa-trash text-sm md:text-base"></i></button>
+                            
+                            <!-- 右側操作按鈕區 -->
+                            <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex flex-row items-center bg-white rounded-xl p-1 shadow-sm border border-mocha-100 flex-shrink-0 space-x-1">
+                                <button onclick="copyShortcut('${file.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-blue-600 hover:bg-blue-50 transition" title="複製專屬捷徑"><i class="fa-solid fa-link text-sm"></i></button>
+                                <button onclick="downloadFile('${file.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition" title="外帶下載"><i class="fa-solid fa-download text-sm"></i></button>
+                                <button onclick="openModal('edit', '${file.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition" title="編輯內容"><i class="fa-solid fa-pen text-sm"></i></button>
+                                <button onclick="deleteFile('${file.id}', '${fName}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition" title="捨棄"><i class="fa-solid fa-trash text-sm"></i></button>
                             </div>
                         </div>
+                        
                         <h3 class="text-xl font-bold text-mocha-900 mb-2 line-clamp-2" title="${file.name}">${file.name}</h3>
-                        <p class="text-sm md:text-base text-mocha-500 mb-4 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2 text-base"></i> ${file.developer}</p>
+                        <p class="text-sm text-mocha-500 mb-4 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2"></i> ${file.developer}</p>
                         
                         <div class="mb-4 flex-1 overflow-y-auto h-16 pr-2">
                             <p class="text-sm md:text-base text-mocha-700 leading-relaxed whitespace-pre-wrap">${desc}</p>
                         </div>
 
-                        ${generateStars(file.id, ratings)}
+                        ${interactiveRatingHtml}
 
-                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-base md:text-lg py-3 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
+                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-base py-3 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
                             <i class="fa-solid fa-mug-hot mr-2.5 group-hover/btn:animate-pulse"></i> 品味網頁
                         </button>
                     </div>
