@@ -2,9 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 加入 viewport-fit=cover 確保在 iPhone 等全螢幕手機不會被瀏海遮擋 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AI應用教學網頁管理 V.1.1</title>
+    <title>鳳甲AI應用教學 V.1.1</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 FontAwesome 圖示 -->
@@ -83,7 +82,7 @@
     <!-- 手機版頂部標題列 (僅在手機顯示) -->
     <header class="md:hidden bg-white border-b border-mocha-100 px-6 py-4 flex justify-between items-center shadow-sm z-20 flex-shrink-0">
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
-            <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 教學咖啡館
+            <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲AI應用教學
         </div>
         <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.1</span>
     </header>
@@ -95,11 +94,11 @@
         <aside id="sidebar-container" class="hidden md:flex flex-col w-full md:w-80 bg-white border-r border-mocha-100 z-20 h-full">
             <!-- 電腦版標題列 -->
             <div class="hidden md:flex p-6 border-b border-mocha-100 items-center space-x-4 bg-mocha-50/80">
-                <div class="bg-mocha-500 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transform -rotate-3 hover:rotate-0 transition-transform">
+                <div class="bg-mocha-500 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transform -rotate-3 hover:rotate-0 transition-transform flex-shrink-0">
                     <i class="fa-solid fa-store text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-mocha-800 tracking-wide leading-tight">AI應用教學</h1>
+                    <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲AI應用教學</h1>
                     <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.1</span>
                 </div>
             </div>
@@ -132,7 +131,7 @@
                     <span>打包外帶</span>
                 </button>
                 <button onclick="openSettings()" class="w-full text-mocha-400 hover:text-mocha-600 font-bold py-2 text-sm transition flex items-center justify-center mt-1 group">
-                    <i class="fa-solid fa-sliders mr-2 group-hover:rotate-90 transition-transform"></i> 咖啡館設定
+                    <i class="fa-solid fa-sliders mr-2 group-hover:rotate-90 transition-transform"></i> 系統設定
                 </button>
             </div>
         </aside>
@@ -271,7 +270,7 @@
     <div id="settings-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in p-4 md:p-0">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
             <div class="p-6 md:p-7 border-b border-mocha-100 flex justify-between items-center">
-                <h3 class="text-xl md:text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-store text-sage-500 mr-3"></i>咖啡館設定</h3>
+                <h3 class="text-xl md:text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-store text-sage-500 mr-3"></i>系統設定</h3>
                 <button onclick="closeModal('settings-modal')" class="text-mocha-400 hover:text-mocha-600 transition"><i class="fa-solid fa-times text-xl md:text-2xl"></i></button>
             </div>
             <div class="p-6 md:p-8 bg-mocha-50/30 relative overflow-hidden">
@@ -310,7 +309,7 @@
     </div>
 
     <!-- 訊息提示 (Toast) -->
-    <div id="toast" class="fixed bottom-[80px] md:bottom-10 left-1/2 transform -translate-x-1/2 translate-y-32 opacity-0 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-3 md:space-x-4">
+    <div id="toast" class="fixed bottom-[80px] md:bottom-10 left-1/2 transform -translate-x-1/2 translate-y-32 opacity-0 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-3 md:space-x-4 text-white w-max max-w-[90vw]">
         <i id="toast-icon" class="fa-solid text-lg md:text-xl"></i>
         <span id="toast-message" class="text-base md:text-lg font-bold tracking-wide">操作成功！</span>
     </div>
@@ -326,6 +325,7 @@
         let filesData = [];
         let currentCategory = 'all';
         let currentPreviewId = null;
+        let isInitialLoad = true;
 
         window.onload = () => {
             setupAutoFilenamePreview();
@@ -372,6 +372,7 @@
             }
         }
 
+        // [魔法] 萃取說明文字
         function extractDescription(htmlContent) {
             const tag = String.fromCharCode(60) + 'meta name="app-description" content="(.*?)"' + String.fromCharCode(62);
             const regex = new RegExp(tag, 'i');
@@ -379,12 +380,46 @@
             return match ? match[1] : "";
         }
 
+        // [魔法] 塞入說明文字
         function injectDescription(htmlContent, description) {
             const cleanPattern = String.fromCharCode(60) + 'meta name="app-description" content=".*?"' + String.fromCharCode(62) + '\\n?';
             let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
             if(!description.trim()) return cleanHtml;
 
             const metaTag = String.fromCharCode(60) + 'meta name="app-description" content="' + description + '"' + String.fromCharCode(62) + '\n';
+            const headEnd = String.fromCharCode(60, 47, 104, 101, 97, 100, 62); 
+            const htmlStart = String.fromCharCode(60, 104, 116, 109, 108, 62); 
+            const headStart = String.fromCharCode(60, 104, 101, 97, 100, 62); 
+            
+            if (cleanHtml.includes(headEnd)) {
+                return cleanHtml.replace(headEnd, metaTag + headEnd);
+            } else if (cleanHtml.includes(htmlStart)) {
+                return cleanHtml.replace(htmlStart, htmlStart + '\n' + headStart + '\n' + metaTag + headEnd);
+            } else {
+                return metaTag + cleanHtml; 
+            }
+        }
+
+        // [魔法] 萃取評分資料
+        function extractRatings(htmlContent) {
+            const tag = String.fromCharCode(60) + 'meta name="app-rating" content="(.*?)"' + String.fromCharCode(62);
+            const regex = new RegExp(tag, 'i');
+            const match = htmlContent.match(regex);
+            if (match && match[1]) {
+                try {
+                    return JSON.parse(match[1]);
+                } catch(e) { return []; }
+            }
+            return [];
+        }
+
+        // [魔法] 塞入評分資料
+        function injectRatings(htmlContent, ratingsArray) {
+            const cleanPattern = String.fromCharCode(60) + 'meta name="app-rating" content=".*?"' + String.fromCharCode(62) + '\\n?';
+            let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
+            if(!ratingsArray || ratingsArray.length === 0) return cleanHtml;
+
+            const metaTag = String.fromCharCode(60) + 'meta name="app-rating" content=\'' + JSON.stringify(ratingsArray) + '\'' + String.fromCharCode(62) + '\n';
             const headEnd = String.fromCharCode(60, 47, 104, 101, 97, 100, 62); 
             const htmlStart = String.fromCharCode(60, 104, 116, 109, 108, 62); 
             const headStart = String.fromCharCode(60, 104, 101, 97, 100, 62); 
@@ -410,6 +445,18 @@
                         filesData = response.data;
                         renderApp();
                         showToast(`為您端上 ${filesData.length} 份作品`, 'success');
+                        
+                        // 檢查是否為捷徑開啟
+                        if(isInitialLoad) {
+                            const params = new URLSearchParams(window.location.search);
+                            const autoId = params.get('id');
+                            if(autoId) {
+                                setTimeout(() => runFile(autoId), 300);
+                                // 清除網址列參數避免重新整理再次彈出
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                            }
+                            isInitialLoad = false;
+                        }
                     } else {
                         showToast('讀取失敗：' + response.error, 'error');
                     }
@@ -427,12 +474,22 @@
 
             const rawContent = document.getElementById('file-content').value;
             const description = document.getElementById('file-description').value;
-            const finalContent = injectDescription(rawContent, description);
+            
+            // 保存編輯時，不要覆蓋原本的評分資料
+            const fileId = document.getElementById('file-id').value;
+            let existingRatings = [];
+            if(fileId) {
+                const existingFile = filesData.find(f => f.id === fileId);
+                if(existingFile) existingRatings = extractRatings(existingFile.content);
+            }
+
+            let finalContent = injectDescription(rawContent, description);
+            finalContent = injectRatings(finalContent, existingRatings);
 
             const payload = {
                 action: 'saveFile',
                 folderId: getFolderId(),
-                fileId: document.getElementById('file-id').value,
+                fileId: fileId,
                 category: document.getElementById('file-category').value.trim(),
                 name: document.getElementById('file-name').value.trim(),
                 developer: document.getElementById('file-developer').value.trim(),
@@ -465,6 +522,82 @@
                 document.getElementById('save-btn').disabled = false;
                 showToast('系統異常，無法歸檔', 'error');
             });
+        }
+
+        // 提交評分
+        function rateFile(id, score) {
+            const file = filesData.find(f => f.id === id);
+            if(!file) return;
+
+            // 簡單防呆：同一個瀏覽器工作階段只能評一次同一份檔案
+            if(sessionStorage.getItem('rated_' + id)) {
+                showToast('您已經為這份作品評分過囉！', 'error');
+                return;
+            }
+
+            showLoader('提交評價中...');
+            
+            let ratings = extractRatings(file.content);
+            ratings.push(score);
+            file.content = injectRatings(file.content, ratings);
+            
+            sessionStorage.setItem('rated_' + id, 'true');
+
+            const payload = {
+                action: 'saveFile',
+                folderId: getFolderId(),
+                fileId: file.id,
+                category: file.category,
+                name: file.name,
+                developer: file.developer,
+                content: file.content
+            };
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(response => {
+                hideLoader();
+                if (response.success) {
+                    showToast('感謝您的五星好評！', 'success');
+                    renderFiles(); // 重新渲染卡片更新星星
+                } else {
+                    showToast('評分提交失敗', 'error');
+                    // 復原 session 狀態
+                    sessionStorage.removeItem('rated_' + id);
+                }
+            })
+            .catch(error => {
+                hideLoader();
+                showToast('網路異常，評分失敗', 'error');
+                sessionStorage.removeItem('rated_' + id);
+            });
+        }
+
+        // 產生星星 HTML
+        function generateStars(fileId, ratings) {
+            let avg = 0;
+            if (ratings.length > 0) {
+                avg = ratings.reduce((a,b) => a+b, 0) / ratings.length;
+            }
+            let starsHtml = '';
+            for(let i=1; i<=5; i++) {
+                let starClass = "fa-regular fa-star text-mocha-300"; 
+                if (i <= avg) {
+                    starClass = "fa-solid fa-star text-yellow-400"; 
+                } else if (i - 0.5 <= avg) {
+                    starClass = "fa-solid fa-star-half-stroke text-yellow-400"; 
+                }
+                starsHtml += `<i class="${starClass} cursor-pointer hover:scale-125 transition-transform drop-shadow-sm" onclick="rateFile('${fileId}', ${i})" title="給予 ${i} 顆星"></i>`;
+            }
+            const avgText = ratings.length > 0 ? `${avg.toFixed(1)} <span class="text-xs">(${ratings.length}人)</span>` : `尚無評分`;
+            return `<div class="flex items-center justify-between bg-mocha-50/50 p-2 rounded-xl border border-mocha-100 mb-4">
+                        <div class="flex space-x-1.5 text-lg">${starsHtml}</div>
+                        <div class="text-mocha-600 font-bold">${avgText}</div>
+                    </div>`;
         }
 
         function deleteFile(id, fileName) {
@@ -522,6 +655,21 @@
             showToast(`已為您準備好：${filename}`, 'success');
         }
 
+        function copyShortcut(id) {
+            const baseUrl = window.location.href.split('?')[0];
+            const shortcutUrl = `${baseUrl}?id=${id}`;
+            
+            // 由於 iFrame 限制，使用舊版 execCommand 確保能成功複製
+            const tempInput = document.createElement('input');
+            tempInput.value = shortcutUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            showToast('專屬捷徑已複製！快貼到手機首頁吧', 'success');
+        }
+
         function downloadAllZip() {
             if (filesData.length === 0) {
                 showToast('書櫃目前是空的', 'error');
@@ -564,7 +712,6 @@
                 const count = cat === 'all' ? filesData.length : filesData.filter(f => f.category === cat).length;
                 
                 const btn = document.createElement('button');
-                // 緊湊化設計，減小間距與內距
                 btn.className = `w-full text-left px-4 py-3 rounded-xl mb-1 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-sage-50 text-sage-700 font-bold shadow-[inset_6px_0_0_#7e9e8c]' : 'text-mocha-600 hover:bg-mocha-50/80 font-medium'}`;
                 btn.onclick = () => {
                     currentCategory = cat;
@@ -603,6 +750,7 @@
             files.forEach(file => {
                 const fName = `${file.category}-${file.name}-${file.developer}.html`;
                 const desc = extractDescription(file.content) || "尚未填寫內容簡介...";
+                const ratings = extractRatings(file.content);
 
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-3xl shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-mocha-100 transition-all duration-300 p-6 md:p-8 flex flex-col group relative overflow-hidden';
@@ -618,12 +766,13 @@
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
                         <div class="flex justify-between items-start mb-5 gap-2">
-                            <!-- 確保標籤橫向單行顯示 -->
+                            <!-- 標籤橫向單行顯示 -->
                             <div class="inline-flex items-center text-sm md:text-base font-bold tracking-wider px-3.5 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100 min-w-0">
                                 <i class="fa-solid fa-tag text-mocha-400 mr-1.5 flex-shrink-0"></i>
                                 <span class="truncate">${file.category}</span>
                             </div>
                             <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity space-x-1.5 flex items-center bg-white rounded-xl p-1.5 shadow-sm border border-mocha-100 flex-shrink-0">
+                                <button onclick="copyShortcut('${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-blue-600 hover:bg-blue-50 transition" title="複製捷徑"><i class="fa-solid fa-link text-base md:text-lg"></i></button>
                                 <button onclick="downloadFile('${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition" title="外帶下載"><i class="fa-solid fa-download text-base md:text-lg"></i></button>
                                 <button onclick="openModal('edit', '${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition" title="編輯內容"><i class="fa-solid fa-pen text-base md:text-lg"></i></button>
                                 <button onclick="deleteFile('${file.id}', '${fName}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition" title="捨棄"><i class="fa-solid fa-trash text-base md:text-lg"></i></button>
@@ -632,10 +781,13 @@
                         <h3 class="text-xl font-bold text-mocha-900 mb-2 line-clamp-2" title="${file.name}">${file.name}</h3>
                         <p class="text-base text-mocha-500 mb-4 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2 text-base"></i> ${file.developer}</p>
                         
-                        <!-- 固定高度加滑桿顯示說明 -->
-                        <div class="mb-5 flex-1 overflow-y-auto h-20 pr-2">
+                        <!-- 內容簡介 -->
+                        <div class="mb-4 flex-1 overflow-y-auto h-16 pr-2">
                             <p class="text-base text-mocha-700 leading-relaxed whitespace-pre-wrap">${desc}</p>
                         </div>
+
+                        <!-- 滿分五顆星評分區塊 -->
+                        ${generateStars(file.id, ratings)}
 
                         <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-base md:text-lg py-3 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
                             <i class="fa-solid fa-mug-hot mr-2.5 group-hover/btn:animate-pulse"></i> 品味網頁
