@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#fdfbf7" />
     
-    <title>鳳甲AI應用教學 V.1.9</title>
+    <title>鳳甲AI咖啡館 V.1.10</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
@@ -54,6 +54,12 @@
         #preview-frame:fullscreen { background-color: #fdfbf7; width: 100vw; height: 100vh; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
+        /* 咖啡廳手寫筆記風邊框 */
+        .tasting-note { position: relative; }
+        .tasting-note::before {
+            content: ''; position: absolute; left: 0; top: 10%; bottom: 10%; width: 3px; background-color: #dcb897; border-radius: 2px;
+        }
+
         @media (max-width: 767px) {
             body[data-mobile-tab="files"] #sidebar-container { display: none !important; }
             body[data-mobile-tab="files"] #main-container { display: flex !important; }
@@ -74,118 +80,119 @@
 
     <div id="loader" class="fixed inset-0 bg-mocha-50/90 backdrop-blur-sm z-[999] flex-col items-center justify-center fade-in">
         <i class="fa-solid fa-mug-hot fa-bounce text-6xl md:text-7xl text-mocha-500 mb-6"></i>
-        <p class="text-xl md:text-2xl font-bold text-mocha-800 tracking-widest" id="loader-text">萃取資料中...</p>
+        <p class="text-xl md:text-2xl font-bold text-mocha-800 tracking-widest" id="loader-text">咖啡師為您沖泡中...</p>
     </div>
 
     <!-- 手機版頂部標題列 -->
     <header class="md:hidden bg-white border-b border-mocha-100 px-6 py-4 flex justify-between items-center shadow-sm z-20 flex-shrink-0">
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
-            <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲AI應用教學
+            <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲 AI 咖啡館
         </div>
-        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.9</span>
+        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.10</span>
     </header>
 
     <div class="flex flex-1 overflow-hidden relative">
-        <!-- 左側分類導覽列 -->
-        <aside id="sidebar-container" class="hidden md:flex flex-col w-full md:w-80 bg-white border-r border-mocha-100 z-20 h-full">
+        <!-- 左側分類導覽列 (POS 機選單區) -->
+        <aside id="sidebar-container" class="hidden md:flex flex-col w-full md:w-80 bg-white border-r border-mocha-100 z-20 h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
             <div class="hidden md:flex p-6 border-b border-mocha-100 items-center space-x-4 bg-mocha-50/80">
-                <div class="bg-mocha-500 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transform -rotate-3 hover:rotate-0 transition-transform flex-shrink-0">
+                <div class="bg-mocha-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transform -rotate-3 hover:rotate-0 transition-transform flex-shrink-0">
                     <i class="fa-solid fa-store text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲AI應用教學</h1>
-                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.9</span>
+                    <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲 AI 咖啡館</h1>
+                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">應用教學 V.1.10</span>
                 </div>
             </div>
             
             <div id="section-categories" class="flex flex-col flex-1 h-full overflow-hidden">
                 <div class="md:hidden px-6 py-4 bg-mocha-50 text-mocha-700 font-bold border-b border-mocha-100 flex items-center">
-                    <i class="fa-solid fa-tags mr-2 text-sage-500"></i> 請選擇網頁風味
+                    <i class="fa-solid fa-tags mr-2 text-sage-500"></i> 請選擇風味系列
                 </div>
-                <div class="p-5 flex-1 overflow-y-auto space-y-1 relative" id="category-list"></div>
+                <div class="p-5 flex-1 overflow-y-auto space-y-1.5 relative" id="category-list"></div>
             </div>
             
-            <div id="section-actions" class="hidden md:block p-5 border-t border-mocha-100 space-y-2.5 bg-white">
-                <div class="md:hidden pb-4 text-center text-mocha-800 font-bold text-xl flex items-center justify-center">
-                    <i class="fa-solid fa-mug-hot text-mocha-500 mr-2"></i> 咖啡館服務
+            <div id="section-actions" class="hidden md:block p-5 border-t border-mocha-100 space-y-3 bg-mocha-50/30">
+                <div class="md:hidden pb-4 text-center text-mocha-800 font-bold text-xl flex items-center justify-center border-b border-mocha-100 mb-4">
+                    <i class="fa-solid fa-concierge-bell text-mocha-500 mr-2"></i> 櫃台服務
                 </div>
-                <button onclick="openModal('add')" class="w-full bg-mocha-600 hover:bg-mocha-700 text-white text-base font-bold py-2.5 px-4 rounded-xl transition duration-300 shadow-md flex items-center justify-center space-x-2 group">
+                <button onclick="openModal('add')" class="w-full bg-mocha-600 hover:bg-mocha-700 text-white text-base font-bold py-3 px-4 rounded-xl transition duration-300 shadow-md flex items-center justify-center space-x-2 group">
                     <i class="fa-solid fa-fire-burner group-hover:animate-pulse"></i>
-                    <span>烘焙新網頁</span>
+                    <span>研發新特調</span>
                 </button>
-                <button onclick="syncDrive()" class="w-full bg-mocha-50 hover:bg-mocha-100 text-mocha-700 text-base font-bold py-2.5 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group border border-mocha-200">
-                    <i class="fa-solid fa-mug-saucer group-hover:scale-110 transition-transform"></i>
-                    <span>重新沖泡</span>
+                <button onclick="syncDrive()" class="w-full bg-white hover:bg-mocha-100 text-mocha-700 text-base font-bold py-2.5 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group border border-mocha-200 shadow-sm">
+                    <i class="fa-solid fa-broom group-hover:scale-110 transition-transform text-mocha-400"></i>
+                    <span>整理吧台 (重新載入)</span>
                 </button>
-                <button onclick="downloadAllZip()" class="w-full bg-sage-50 hover:bg-sage-100 text-sage-700 text-base font-bold py-2.5 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group border border-sage-200">
+                <button onclick="downloadAllZip()" class="w-full bg-sage-50 hover:bg-sage-100 text-sage-700 text-base font-bold py-2.5 px-4 rounded-xl transition duration-300 flex items-center justify-center space-x-2 group border border-sage-200 shadow-sm">
                     <i class="fa-solid fa-bag-shopping group-hover:-translate-y-1 transition-transform"></i>
-                    <span>打包外帶</span>
+                    <span>全品項外帶</span>
                 </button>
-                <button onclick="openSettings()" class="w-full text-mocha-400 hover:text-mocha-600 font-bold py-2 text-sm transition flex items-center justify-center mt-1 group">
-                    <i class="fa-solid fa-sliders mr-2 group-hover:rotate-90 transition-transform"></i> 系統設定
+                <button onclick="openSettings()" class="w-full text-mocha-400 hover:text-mocha-600 font-bold py-2 text-sm transition flex items-center justify-center mt-2 group">
+                    <i class="fa-solid fa-sliders mr-2 group-hover:rotate-90 transition-transform"></i> 咖啡館設定
                 </button>
             </div>
         </aside>
 
-        <!-- 右側主要內容區 -->
-        <main id="main-container" class="flex flex-col flex-1 h-full overflow-hidden relative bg-mocha-50/50">
-            <div class="absolute top-0 right-0 w-full h-64 bg-gradient-to-b from-white to-transparent opacity-80 pointer-events-none z-0"></div>
-            <i class="fa-solid fa-mug-hot absolute right-4 md:right-16 top-10 md:top-24 text-mocha-200 opacity-20 text-6xl md:text-8xl float-anim z-0 pointer-events-none"></i>
-            <i class="fa-solid fa-cookie-bite absolute left-1/4 bottom-10 md:bottom-20 text-mocha-300 opacity-15 text-5xl md:text-7xl float-anim-rev delay-1 z-0 pointer-events-none"></i>
-            <i class="fa-solid fa-leaf absolute right-1/3 bottom-1/4 text-sage-200 opacity-20 text-5xl md:text-7xl float-anim delay-2 z-0 pointer-events-none"></i>
+        <!-- 右側主要內容區 (菜單展示區) -->
+        <main id="main-container" class="flex flex-col flex-1 h-full overflow-hidden relative bg-[#fffdfa]">
+            <!-- 裝飾背景 -->
+            <div class="absolute top-0 right-0 w-full h-72 bg-gradient-to-b from-mocha-50 to-transparent opacity-90 pointer-events-none z-0"></div>
+            <i class="fa-solid fa-mug-hot absolute right-4 md:right-16 top-10 md:top-24 text-mocha-200 opacity-[0.15] text-6xl md:text-8xl float-anim z-0 pointer-events-none"></i>
+            <i class="fa-solid fa-cookie-bite absolute left-1/4 bottom-10 md:bottom-20 text-mocha-300 opacity-[0.12] text-5xl md:text-7xl float-anim-rev delay-1 z-0 pointer-events-none"></i>
+            <i class="fa-solid fa-leaf absolute right-1/3 bottom-1/4 text-sage-200 opacity-[0.15] text-5xl md:text-7xl float-anim delay-2 z-0 pointer-events-none"></i>
 
-            <header class="pt-8 md:pt-12 pb-6 px-6 md:px-12 flex justify-between items-end z-10 relative">
+            <header class="pt-8 md:pt-12 pb-4 px-6 md:px-12 flex justify-between items-end z-10 relative border-b border-mocha-100/50 mx-6 md:mx-0">
                 <div>
-                    <h2 class="text-3xl md:text-4xl font-bold text-mocha-900 tracking-tight" id="current-category-title">特調總覽</h2>
-                    <div class="text-base md:text-lg text-mocha-500 mt-2 md:mt-3 font-medium flex items-center">
-                        <i class="fa-solid fa-book-open text-mocha-400 mr-2 text-lg md:text-xl"></i>
-                        <span id="file-count">共 0 份作品</span>
+                    <h2 class="text-3xl md:text-4xl font-black text-mocha-900 tracking-tight" id="current-category-title">今日菜單</h2>
+                    <div class="text-base md:text-lg text-mocha-500 mt-2 md:mt-3 font-bold flex items-center">
+                        <i class="fa-solid fa-clipboard-list text-mocha-400 mr-2 text-lg md:text-xl"></i>
+                        <span id="file-count">為您準備了 0 款特調</span>
                     </div>
                 </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto px-6 md:px-12 pb-24 md:pb-12 z-10 relative">
-                <!-- 【升級寬度】調整了 grid 數量，讓大螢幕上的卡片變得更寬敞 -->
+            <div class="flex-1 overflow-y-auto px-6 md:px-12 pt-6 pb-24 md:pb-12 z-10 relative">
+                <!-- 菜單項目卡片網格 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8" id="files-container"></div>
             </div>
         </main>
     </div>
 
-    <!-- 手機版底部導航列 -->
+    <!-- 手機版底部導航列 (符合點餐情境) -->
     <nav class="md:hidden flex bg-white border-t border-mocha-100 z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe absolute bottom-0 w-full">
         <button onclick="switchMobileTab('files')" id="tab-btn-files" class="mobile-tab-btn flex-1 py-3.5 flex flex-col items-center text-sage-600 font-bold transition-colors">
-            <i class="fa-solid fa-book-open text-xl mb-1.5"></i>
-            <span class="text-xs tracking-wider">書櫃</span>
+            <i class="fa-solid fa-clipboard-list text-xl mb-1.5"></i>
+            <span class="text-xs tracking-wider">菜單</span>
         </button>
         <button onclick="switchMobileTab('categories')" id="tab-btn-categories" class="mobile-tab-btn flex-1 py-3.5 flex flex-col items-center text-mocha-400 font-medium transition-colors">
             <i class="fa-solid fa-tags text-xl mb-1.5"></i>
-            <span class="text-xs tracking-wider">分類</span>
+            <span class="text-xs tracking-wider">風味</span>
         </button>
         <button onclick="switchMobileTab('actions')" id="tab-btn-actions" class="mobile-tab-btn flex-1 py-3.5 flex flex-col items-center text-mocha-400 font-medium transition-colors">
-            <i class="fa-solid fa-mug-hot text-xl mb-1.5"></i>
-            <span class="text-xs tracking-wider">服務</span>
+            <i class="fa-solid fa-concierge-bell text-xl mb-1.5"></i>
+            <span class="text-xs tracking-wider">櫃台</span>
         </button>
     </nav>
 
-    <!-- 新增/修改 Modal -->
-    <div id="file-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-50 fade-in p-4 md:p-0">
-        <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="p-6 md:p-8 border-b border-mocha-100 flex justify-between items-center bg-mocha-50/50">
-                <h3 class="text-xl md:text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-pen-fancy text-sage-500 mr-3"></i> <span id="modal-title">調製新網頁</span></h3>
-                <button onclick="closeModal('file-modal')" class="text-mocha-400 hover:text-mocha-700 transition">
-                    <i class="fa-solid fa-times text-2xl"></i>
+    <!-- 新增/修改 Modal (配方表) -->
+    <div id="file-modal" class="fixed inset-0 bg-mocha-900/60 backdrop-blur-sm hidden items-center justify-center z-50 fade-in p-4 md:p-0">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border-t-8 border-mocha-600">
+            <div class="p-6 md:p-8 border-b border-mocha-100 flex justify-between items-center bg-[#fffdfa]">
+                <h3 class="text-xl md:text-2xl font-black text-mocha-800 flex items-center"><i class="fa-solid fa-scroll text-mocha-500 mr-3"></i> <span id="modal-title">特調配方表</span></h3>
+                <button onclick="closeModal('file-modal')" class="text-mocha-400 hover:text-red-500 transition bg-mocha-50 hover:bg-red-50 w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-times text-xl"></i>
                 </button>
             </div>
-            <div class="p-6 md:p-10 flex-1 overflow-y-auto bg-white relative">
-                <i class="fa-solid fa-feather-pointed absolute right-4 md:right-10 bottom-10 text-[6rem] md:text-[10rem] text-mocha-50 opacity-50 z-0 pointer-events-none -rotate-12"></i>
+            <div class="p-6 md:p-10 flex-1 overflow-y-auto bg-[#fffdfa] relative">
+                <i class="fa-solid fa-mug-saucer absolute right-4 md:right-10 bottom-10 text-[6rem] md:text-[12rem] text-mocha-50 opacity-60 z-0 pointer-events-none -rotate-12"></i>
                 
                 <form id="file-form" class="space-y-6 md:space-y-8 relative z-10">
                     <input type="hidden" id="file-id" />
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                         <div>
-                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-tag text-sage-400 mr-1.5"></i>分類風味</label>
-                            <input type="text" id="file-category" list="category-options" placeholder="例如：教學" required class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white" />
+                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>風味系列</label>
+                            <input type="text" id="file-category" list="category-options" placeholder="例如：教學" required class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-mocha-500 focus:border-mocha-500 transition shadow-sm text-mocha-800" />
                             <datalist id="category-options">
                                 <option value="教學"></option>
                                 <option value="導師"></option>
@@ -193,35 +200,35 @@
                             </datalist>
                         </div>
                         <div>
-                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-font text-sage-400 mr-1.5"></i>網頁名稱</label>
-                            <input type="text" id="file-name" placeholder="例如：首頁" required class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white" />
+                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-font text-mocha-400 mr-1.5"></i>特調名稱</label>
+                            <input type="text" id="file-name" placeholder="例如：計分板" required class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-mocha-500 focus:border-mocha-500 transition shadow-sm text-mocha-800" />
                         </div>
                         <div>
-                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-user-astronaut text-sage-400 mr-1.5"></i>作者</label>
-                            <input type="text" id="file-developer" placeholder="例如：王大明" required class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white" />
+                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-user-tie text-mocha-400 mr-1.5"></i>咖啡師 (開發者)</label>
+                            <input type="text" id="file-developer" placeholder="例如：您的名字" required class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-mocha-500 focus:border-mocha-500 transition shadow-sm text-mocha-800" />
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-quote-left text-sage-400 mr-1.5"></i>內容簡介</label>
-                        <textarea id="file-description" rows="3" placeholder="寫下這份網頁的設計理念或用途..." class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-4 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm resize-none text-mocha-800 focus:bg-white"></textarea>
+                        <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-pen-nib text-mocha-400 mr-1.5"></i>風味筆記 (用途簡介)</label>
+                        <textarea id="file-description" rows="3" placeholder="寫下這杯特調的口感或用途..." class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-mocha-500 focus:border-mocha-500 transition shadow-sm resize-none text-mocha-800"></textarea>
                     </div>
                     
                     <div class="text-xs md:text-sm font-bold text-mocha-500 flex items-center justify-end">
-                        <i class="fa-solid fa-cloud-arrow-up mr-2 text-sm md:text-base"></i>
-                        將儲存為：<span id="preview-filename" class="text-mocha-700 ml-2 font-mono bg-mocha-100 px-2 py-1 rounded text-xs md:text-base">檔案名稱.html</span>
+                        <i class="fa-solid fa-receipt mr-2 text-sm md:text-base"></i>
+                        杯身標籤將印為：<span id="preview-filename" class="text-mocha-700 ml-2 font-mono bg-mocha-100 px-2 py-1 rounded text-xs md:text-base border border-mocha-200">檔案名稱.html</span>
                     </div>
 
                     <div>
-                        <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-code text-sage-400 mr-1.5"></i>HTML 原始碼</label>
-                        <textarea id="file-content" required rows="8" placeholder="在此貼上程式碼..." class="w-full text-sm md:text-base bg-slate-50 border border-mocha-200 rounded-lg p-4 md:p-5 font-mono outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-inner text-slate-700 focus:bg-white"></textarea>
+                        <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-code text-mocha-400 mr-1.5"></i>特調秘方 (HTML 原始碼)</label>
+                        <textarea id="file-content" required rows="8" placeholder="在此貼上程式碼..." class="w-full text-sm md:text-base bg-slate-800 text-green-400 border border-mocha-200 rounded-xl p-4 md:p-5 font-mono outline-none focus:ring-2 focus:ring-mocha-500 shadow-inner"></textarea>
                     </div>
                 </form>
             </div>
-            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end space-x-3 md:space-x-5 bg-mocha-50/50">
-                <button onclick="closeModal('file-modal')" class="px-5 py-2.5 md:px-8 md:py-3 text-base md:text-lg text-mocha-600 bg-white border border-mocha-200 rounded-lg hover:bg-mocha-100 transition font-bold">取消</button>
-                <button id="save-btn" onclick="saveFile()" class="px-5 py-2.5 md:px-8 md:py-3 text-base md:text-lg text-white bg-sage-600 rounded-lg hover:bg-sage-700 transition font-bold shadow-md flex items-center">
-                    <i class="fa-solid fa-check mr-2"></i>確認收藏
+            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end space-x-3 md:space-x-5 bg-mocha-50">
+                <button onclick="closeModal('file-modal')" class="px-5 py-2.5 md:px-8 md:py-3 text-base md:text-lg text-mocha-600 bg-white border border-mocha-200 rounded-xl hover:bg-mocha-100 transition font-bold">先不要</button>
+                <button id="save-btn" onclick="saveFile()" class="px-5 py-2.5 md:px-8 md:py-3 text-base md:text-lg text-white bg-mocha-600 rounded-xl hover:bg-mocha-700 transition font-bold shadow-md flex items-center">
+                    <i class="fa-solid fa-check mr-2"></i>上架菜單
                 </button>
             </div>
         </div>
@@ -231,18 +238,18 @@
     <div id="preview-modal" class="fixed inset-0 bg-mocha-900/95 hidden flex-col z-[60] fade-in">
         <div class="flex justify-between items-center px-4 py-3 md:px-6 md:py-4 bg-transparent text-mocha-100">
             <h3 class="text-base md:text-xl font-bold flex items-center truncate max-w-xs md:max-w-2xl">
-                <i class="fa-solid fa-tv text-sage-400 mr-3"></i> 
-                <span id="preview-title" class="tracking-wide truncate">網頁預覽</span>
+                <i class="fa-solid fa-mug-hot text-sage-400 mr-3"></i> 
+                <span id="preview-title" class="tracking-wide truncate">享用特調中</span>
             </h3>
             
             <div class="flex items-center space-x-2 md:space-x-4">
-                <button onclick="openInNewTab()" class="text-mocha-300 hover:text-white transition flex items-center px-2.5 py-1.5 md:px-4 md:py-2 rounded bg-mocha-800/50 hover:bg-mocha-700" title="在全新分頁獨立開啟">
+                <button onclick="openInNewTab()" class="text-mocha-300 hover:text-white transition flex items-center px-2.5 py-1.5 md:px-4 md:py-2 rounded-lg bg-mocha-800/50 hover:bg-mocha-700" title="在全新分頁獨立開啟">
                     <i class="fa-solid fa-arrow-up-right-from-square text-sm md:text-base md:mr-2"></i>
-                    <span class="hidden md:inline text-base font-bold">獨立視窗</span>
+                    <span class="hidden md:inline text-base font-bold">外帶視窗</span>
                 </button>
-                <button onclick="toggleFullScreen()" class="text-mocha-300 hover:text-white transition flex items-center px-2.5 py-1.5 md:px-4 md:py-2 rounded bg-mocha-800/50 hover:bg-mocha-700" title="全螢幕模式 (按 Esc 退出)">
+                <button onclick="toggleFullScreen()" class="text-mocha-300 hover:text-white transition flex items-center px-2.5 py-1.5 md:px-4 md:py-2 rounded-lg bg-mocha-800/50 hover:bg-mocha-700" title="全螢幕模式 (按 Esc 退出)">
                     <i class="fa-solid fa-expand text-sm md:text-base md:mr-2"></i>
-                    <span class="hidden md:inline text-base font-bold">全螢幕</span>
+                    <span class="hidden md:inline text-base font-bold">沉浸品嚐</span>
                 </button>
                 <div class="h-6 w-px bg-mocha-700 mx-1 md:mx-2"></div>
                 <button onclick="closeModal('preview-modal')" class="text-mocha-400 hover:text-red-400 transition w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-mocha-800">
@@ -256,48 +263,48 @@
     </div>
 
     <!-- 基本設定 Modal -->
-    <div id="settings-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in p-4 md:p-0">
+    <div id="settings-modal" class="fixed inset-0 bg-mocha-900/60 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in p-4 md:p-0">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
-            <div class="p-6 md:p-7 border-b border-mocha-100 flex justify-between items-center">
-                <h3 class="text-xl md:text-2xl font-bold text-mocha-800 flex items-center"><i class="fa-solid fa-store text-sage-500 mr-3"></i>系統設定</h3>
-                <button onclick="closeModal('settings-modal')" class="text-mocha-400 hover:text-mocha-600 transition"><i class="fa-solid fa-times text-xl md:text-2xl"></i></button>
+            <div class="p-6 md:p-7 border-b border-mocha-100 flex justify-between items-center bg-[#fffdfa]">
+                <h3 class="text-xl md:text-2xl font-black text-mocha-800 flex items-center"><i class="fa-solid fa-store text-mocha-500 mr-3"></i>咖啡館後台設定</h3>
+                <button onclick="closeModal('settings-modal')" class="text-mocha-400 hover:text-mocha-600 transition bg-mocha-50 hover:bg-mocha-100 w-10 h-10 rounded-full flex items-center justify-center"><i class="fa-solid fa-times text-xl md:text-2xl"></i></button>
             </div>
-            <div class="p-6 md:p-8 bg-mocha-50/30 relative overflow-hidden">
+            <div class="p-6 md:p-8 bg-[#fffdfa] relative overflow-hidden">
                 <i class="fa-solid fa-gear absolute -right-6 -bottom-6 text-[8rem] md:text-[10rem] text-mocha-100 opacity-50 z-0 pointer-events-none"></i>
                 <div class="relative z-10">
-                    <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">Google Drive 資料夾 ID</label>
-                    <input type="text" id="setting-folder-id" class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-sage-400 font-mono text-mocha-800 shadow-sm" />
+                    <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">Google Drive 倉庫 ID</label>
+                    <input type="text" id="setting-folder-id" class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-mocha-400 font-mono text-mocha-800 shadow-sm" />
                 </div>
             </div>
-            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end bg-white">
-                <button onclick="saveSettings()" class="w-full py-3 text-lg md:text-xl text-white bg-sage-600 rounded-xl hover:bg-sage-700 transition font-bold shadow-md">套用設定</button>
+            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end bg-mocha-50">
+                <button onclick="saveSettings()" class="w-full py-3 text-lg md:text-xl text-white bg-mocha-600 rounded-xl hover:bg-mocha-700 transition font-bold shadow-md">套用設定</button>
             </div>
         </div>
     </div>
 
     <!-- 刪除確認 Modal -->
-    <div id="delete-modal" class="fixed inset-0 bg-mocha-900/40 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in p-4 md:p-0">
+    <div id="delete-modal" class="fixed inset-0 bg-mocha-900/60 backdrop-blur-sm hidden items-center justify-center z-[70] fade-in p-4 md:p-0">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden border-t-8 border-red-500">
-            <div class="p-6 md:p-7 border-b border-mocha-100 flex justify-between items-center">
-                <h3 class="text-xl md:text-2xl font-bold text-red-700 flex items-center"><i class="fa-solid fa-trash-can mr-3"></i>倒掉這杯特調</h3>
-                <button onclick="closeModal('delete-modal')" class="text-mocha-400 hover:text-mocha-600 transition"><i class="fa-solid fa-times text-xl md:text-2xl"></i></button>
+            <div class="p-6 md:p-7 border-b border-mocha-100 flex justify-between items-center bg-[#fffdfa]">
+                <h3 class="text-xl md:text-2xl font-black text-red-700 flex items-center"><i class="fa-solid fa-trash-can mr-3"></i>倒掉這杯特調</h3>
+                <button onclick="closeModal('delete-modal')" class="text-mocha-400 hover:text-red-500 transition bg-mocha-50 hover:bg-red-50 w-10 h-10 rounded-full flex items-center justify-center"><i class="fa-solid fa-times text-xl md:text-2xl"></i></button>
             </div>
-            <div class="p-6 md:p-8 bg-red-50/30">
+            <div class="p-6 md:p-8 bg-[#fffdfa]">
                 <p class="text-base md:text-lg text-mocha-700 mb-5 md:mb-6 leading-relaxed" id="delete-modal-message">確定要捨棄嗎？</p>
-                <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">請輸入授權密碼</label>
+                <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">請輸入經理授權密碼</label>
                 <input type="password" id="delete-password" placeholder="••••••" class="w-full text-lg md:text-xl bg-white border border-red-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-red-400 font-mono shadow-sm" />
                 <input type="hidden" id="delete-file-id" />
             </div>
-            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end space-x-3 md:space-x-4 bg-white">
-                <button onclick="closeModal('delete-modal')" class="px-5 py-2.5 md:px-6 md:py-3 text-base md:text-lg text-mocha-600 bg-mocha-50 rounded-xl hover:bg-mocha-100 transition font-bold border border-mocha-200 flex-1 md:flex-none">保留</button>
+            <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end space-x-3 md:space-x-4 bg-red-50/30">
+                <button onclick="closeModal('delete-modal')" class="px-5 py-2.5 md:px-6 md:py-3 text-base md:text-lg text-mocha-600 bg-white rounded-xl hover:bg-mocha-100 transition font-bold border border-mocha-200 flex-1 md:flex-none">保留</button>
                 <button onclick="confirmDeleteAction()" class="px-5 py-2.5 md:px-6 md:py-3 text-base md:text-lg text-white bg-red-600 rounded-xl hover:bg-red-700 transition font-bold shadow-md flex items-center justify-center flex-1 md:flex-none">
-                    <i class="fa-solid fa-trash mr-2"></i>捨棄
+                    <i class="fa-solid fa-trash mr-2"></i>確認捨棄
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-[80px] md:bottom-10 left-1/2 transform -translate-x-1/2 translate-y-32 opacity-0 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-3 md:space-x-4 text-white w-max max-w-[90vw]">
+    <div id="toast" class="fixed bottom-[80px] md:bottom-10 left-1/2 transform -translate-x-1/2 translate-y-32 opacity-0 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.2)] z-[100] flex items-center space-x-3 md:space-x-4 text-white w-max max-w-[90vw]">
         <i id="toast-icon" class="fa-solid text-lg md:text-xl"></i>
         <span id="toast-message" class="text-base md:text-lg font-bold tracking-wide">操作成功！</span>
     </div>
@@ -318,7 +325,7 @@
             const autoId = params.get('id');
             
             if (autoId) {
-                showLoader('光速為您準備專屬網頁...');
+                showLoader('光速為您端上專屬特調...');
                 fetch(`${GAS_API_URL}?action=getFile&fileId=${autoId}`)
                     .then(res => res.json())
                     .then(response => {
@@ -328,12 +335,12 @@
                             document.close();
                             if(response.name) document.title = response.name.replace('.html', '');
                         } else {
-                            showToast('無法直接載入，已為您開啟總覽', 'error');
+                            showToast('特調已售完或不存在，為您開啟總菜單', 'error');
                             syncDrive();
                         }
                     })
                     .catch(error => {
-                        showToast('網路連線異常，無法直達', 'error');
+                        showToast('網路異常，為您返回櫃台', 'error');
                         syncDrive();
                     });
             } else {
@@ -341,7 +348,6 @@
             }
         };
 
-        // 取得今天的日期字串 (用於限制每日評分一次)
         function getTodayString() {
             const d = new Date();
             return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
@@ -365,13 +371,13 @@
         }
 
         function openSettings() {
-            const pwd = prompt("進入後台需要密碼：");
+            const pwd = prompt("進入經理室需要密碼：");
             if (pwd === "7675300") {
                 document.getElementById('setting-folder-id').value = getFolderId();
                 document.getElementById('settings-modal').classList.remove('hidden');
                 document.getElementById('settings-modal').classList.add('flex');
             } else if (pwd !== null) {
-                showToast('密碼錯誤，無法進入後台', 'error');
+                showToast('密碼錯誤，無法進入', 'error');
             }
         }
 
@@ -380,16 +386,13 @@
             if(newId) {
                 localStorage.setItem('htmlManager_folderId', newId);
                 closeModal('settings-modal');
-                showToast('設定已更新，重新沖泡中...', 'success');
+                showToast('設定已更新，重新準備菜單...', 'success');
                 syncDrive();
             }
         }
 
         function getSafeTag(type) {
-            const chars = {
-                lt: String.fromCharCode(60),
-                gt: String.fromCharCode(62)
-            };
+            const chars = { lt: String.fromCharCode(60), gt: String.fromCharCode(62) };
             if(type === 'lt') return chars.lt;
             if(type === 'gt') return chars.gt;
             if(type === 'hEnd') return chars.lt + '/head' + chars.gt; 
@@ -447,7 +450,7 @@
 
         function syncDrive() {
             const folderId = getFolderId();
-            showLoader('為您沖泡中... 請稍候');
+            showLoader('咖啡師為您準備菜單中...');
 
             fetch(`${GAS_API_URL}?action=getFiles&folderId=${folderId}`)
                 .then(res => res.json())
@@ -456,15 +459,15 @@
                     if (response.success) {
                         filesData = response.data;
                         renderApp();
-                        showToast(`為您端上 ${filesData.length} 份作品`, 'success');
+                        showToast(`今日為您準備了 ${filesData.length} 杯特調`, 'success');
                     } else {
-                        showToast('讀取失敗：' + response.error, 'error');
+                        showToast('讀取菜單失敗：' + response.error, 'error');
                     }
                 })
                 .catch(error => {
                     hideLoader();
                     console.error('Fetch 錯誤:', error);
-                    showToast('網路連線異常，無法讀取資料夾', 'error');
+                    showToast('網路連線異常，無法讀取吧台', 'error');
                 });
         }
 
@@ -495,7 +498,7 @@
                 content: finalContent
             };
 
-            showLoader('正在為您調製並同步備份...');
+            showLoader('正在為您調製並放入冷藏備份...');
             document.getElementById('save-btn').disabled = true;
 
             fetch(GAS_API_URL, {
@@ -509,17 +512,17 @@
                 document.getElementById('save-btn').disabled = false;
                 if (response.success) {
                     closeModal('file-modal');
-                    showToast('作品已妥善收藏與備份！', 'success');
+                    showToast('特調已成功上架！', 'success');
                     syncDrive();
                     if(window.innerWidth < 768) switchMobileTab('files');
                 } else {
-                    showToast('歸檔失敗：' + response.error, 'error');
+                    showToast('上架失敗：' + response.error, 'error');
                 }
             })
             .catch(error => {
                 hideLoader();
                 document.getElementById('save-btn').disabled = false;
-                showToast('系統異常，無法歸檔', 'error');
+                showToast('系統異常，無法上架', 'error');
             });
         }
 
@@ -533,7 +536,7 @@
                 return;
             }
 
-            showLoader('送出評價中，並同步雲端...');
+            showLoader('遞送您的評價給咖啡師...');
             
             let ratings = extractRatings(file.content);
             ratings.push(score);
@@ -560,22 +563,22 @@
             .then(response => {
                 hideLoader();
                 if (response.success) {
-                    showToast('感謝您的五星好評！', 'success');
+                    showToast('感謝您給予的五星好評！', 'success');
                     renderFiles();
                 } else {
-                    showToast('評分提交失敗', 'error');
+                    showToast('評價遞送失敗', 'error');
                     localStorage.removeItem('rated_date_' + id);
                 }
             })
             .catch(error => {
                 hideLoader();
-                showToast('網路異常，評分失敗', 'error');
+                showToast('網路異常，評價失敗', 'error');
                 localStorage.removeItem('rated_date_' + id);
             });
         }
 
         function deleteFile(id, fileName) {
-            document.getElementById('delete-modal-message').innerHTML = `您確定要將 <span class="font-bold text-red-600">「${fileName}」</span> 丟棄嗎？<br>這個動作不會刪除「備份」資料夾內的檔案。`;
+            document.getElementById('delete-modal-message').innerHTML = `您確定要把 <span class="font-bold text-red-600">「${fileName}」</span> 倒掉嗎？<br>請放心，這個動作不會刪除「備份冷藏庫」裡的檔案。`;
             document.getElementById('delete-file-id').value = id;
             document.getElementById('delete-password').value = ''; 
             
@@ -592,7 +595,7 @@
 
             const id = document.getElementById('delete-file-id').value;
             closeModal('delete-modal');
-            showLoader('正在清理...');
+            showLoader('正在清理吧台...');
 
             fetch(GAS_API_URL, {
                 method: 'POST',
@@ -603,7 +606,7 @@
             .then(response => {
                 hideLoader();
                 if (response.success) {
-                    showToast('檔案已倒掉清理', 'success');
+                    showToast('吧台清理完畢', 'success');
                     syncDrive();
                 } else {
                     showToast('清理失敗：' + response.error, 'error');
@@ -626,7 +629,7 @@
             a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
-            showToast(`已為您準備好：${filename}`, 'success');
+            showToast(`已為您打包好：${filename}`, 'success');
         }
 
         function copyShortcut(id) {
@@ -638,16 +641,16 @@
             tempInput.select();
             document.execCommand('copy');
             document.body.removeChild(tempInput);
-            showToast('專屬捷徑已複製！快貼到手機首頁吧', 'success');
+            showToast('專屬外送連結已複製！', 'success');
         }
 
         function downloadAllZip() {
             if (filesData.length === 0) {
-                showToast('書櫃目前是空的', 'error');
+                showToast('菜單目前是空的', 'error');
                 return;
             }
             
-            showLoader('正在為您打包外帶...');
+            showLoader('正在為您打包全品項外帶...');
             const zip = new JSZip();
             
             filesData.forEach(file => {
@@ -660,10 +663,10 @@
                 const url = URL.createObjectURL(content);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = "網頁作品備份_外帶包.zip";
+                a.download = "鳳甲AI咖啡館_全品項外帶.zip";
                 a.click();
                 URL.revokeObjectURL(url);
-                showToast('打包完成！熱騰騰的外帶已送出', 'success');
+                showToast('外帶餐盒已為您準備好', 'success');
             });
         }
 
@@ -679,11 +682,11 @@
             
             categories.forEach(cat => {
                 const isSelected = currentCategory === cat;
-                const title = cat === 'all' ? '全部特調' : cat;
+                const title = cat === 'all' ? '本店全品項' : cat;
                 const count = cat === 'all' ? filesData.length : filesData.filter(f => f.category === cat).length;
                 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left px-4 py-3 rounded-xl mb-1 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-sage-50 text-sage-700 font-bold shadow-[inset_6px_0_0_#7e9e8c]' : 'text-mocha-600 hover:bg-mocha-50/80 font-medium'}`;
+                btn.className = `w-full text-left px-5 py-4 rounded-2xl mb-2 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-mocha-600 text-white font-bold shadow-md' : 'text-mocha-600 hover:bg-mocha-100 font-bold border border-transparent hover:border-mocha-200'}`;
                 btn.onclick = () => {
                     currentCategory = cat;
                     document.getElementById('current-category-title').innerText = title;
@@ -693,12 +696,12 @@
                     }
                 };
                 
-                const iconColor = isSelected ? 'text-sage-600' : 'text-mocha-400 group-hover:text-mocha-500';
-                const badgeClass = isSelected ? 'bg-sage-100 text-sage-800' : 'bg-mocha-100/80 text-mocha-600';
-                const icon = cat === 'all' ? 'fa-mug-hot' : 'fa-bookmark';
+                const iconColor = isSelected ? 'text-mocha-200' : 'text-mocha-400 group-hover:text-mocha-600';
+                const badgeClass = isSelected ? 'bg-mocha-500 text-white border border-mocha-400' : 'bg-mocha-100 text-mocha-600 border border-mocha-200';
+                const icon = cat === 'all' ? 'fa-mug-hot' : 'fa-tag';
 
-                btn.innerHTML = `<span class="text-base md:text-lg flex items-center"><i class="fa-solid ${icon} w-6 text-center mr-2 ${iconColor} transition-transform group-hover:-rotate-6 text-lg md:text-xl"></i>${title}</span>
-                                 <span class="text-xs md:text-sm ${badgeClass} py-0.5 px-2.5 rounded-full font-bold">${count}</span>`;
+                btn.innerHTML = `<span class="text-base md:text-lg flex items-center"><i class="fa-solid ${icon} w-7 text-center mr-2 ${iconColor} transition-transform group-hover:-rotate-6 text-lg md:text-xl"></i>${title}</span>
+                                 <span class="text-xs md:text-sm ${badgeClass} py-0.5 px-3 rounded-full font-bold">${count}</span>`;
                 list.appendChild(btn);
             });
         }
@@ -706,33 +709,30 @@
         function renderFiles() {
             const container = document.getElementById('files-container');
             const files = currentCategory === 'all' ? filesData : filesData.filter(f => f.category === currentCategory);
-            document.getElementById('file-count').innerText = `共 ${files.length} 份作品`;
+            document.getElementById('file-count').innerText = `為您準備了 ${files.length} 款特調`;
             container.innerHTML = '';
 
             if(files.length === 0) {
                 container.innerHTML = `
                     <div class="col-span-full py-20 md:py-32 flex flex-col items-center justify-center text-mocha-300 relative">
-                        <i class="fa-solid fa-mug-hot text-[5rem] md:text-[6rem] mb-6 opacity-40 float-anim"></i>
-                        <p class="text-xl md:text-2xl font-bold tracking-wide text-center">這個風味目前沒有作品<br>來調製一杯吧！</p>
+                        <i class="fa-solid fa-mug-empty text-[5rem] md:text-[6rem] mb-6 opacity-40 float-anim"></i>
+                        <p class="text-xl md:text-2xl font-bold tracking-wide text-center">這個風味目前售完囉<br>來研發一杯新的吧！</p>
                     </div>`;
                 return;
             }
 
             files.forEach(file => {
                 const fName = `${file.category}-${file.name}-${file.developer}.html`;
-                const desc = extractDescription(file.content) || "尚未填寫內容簡介...";
+                const desc = extractDescription(file.content) || "咖啡師還沒寫下這杯特調的故事...";
                 const ratings = extractRatings(file.content);
 
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-3xl shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-mocha-100 transition-all duration-300 p-6 md:p-8 flex flex-col group relative overflow-hidden';
+                // 咖啡店菜單卡片質感 (圓角、陰影、暖色背景)
+                card.className = 'bg-white rounded-[2rem] shadow-[0_4px_20px_rgba(136,70,50,0.05)] hover:shadow-[0_10px_30px_rgba(136,70,50,0.12)] border border-mocha-100/50 transition-all duration-300 p-6 md:p-8 flex flex-col group relative overflow-hidden';
                 
                 const watermark = document.createElement('i');
-                watermark.className = 'fa-solid fa-mug-saucer absolute -right-4 -bottom-4 md:-right-6 md:-bottom-6 text-[8rem] md:text-[10rem] text-mocha-50 opacity-40 group-hover:opacity-60 group-hover:-rotate-12 transition-all duration-500 z-0 pointer-events-none';
+                watermark.className = 'fa-solid fa-mug-saucer absolute -right-6 -bottom-6 md:-right-8 md:-bottom-8 text-[10rem] md:text-[14rem] text-mocha-50 opacity-40 group-hover:opacity-60 group-hover:-rotate-12 transition-all duration-500 z-0 pointer-events-none';
                 card.appendChild(watermark);
-
-                const sideBar = document.createElement('div');
-                sideBar.className = 'absolute top-8 bottom-8 left-0 w-1.5 bg-sage-300 rounded-r-md opacity-30 group-hover:opacity-100 transition-opacity z-10';
-                card.appendChild(sideBar);
 
                 let avg = 0;
                 if (ratings.length > 0) {
@@ -747,56 +747,62 @@
                 
                 if (hasRated) {
                     interactiveRatingHtml = `
-                        <div class="flex items-center justify-between bg-sage-50/70 p-3 rounded-xl border border-sage-200 mb-4">
-                            <span class="text-sm font-bold text-sage-800">今日評價</span>
-                            <span class="text-sm font-bold text-sage-600"><i class="fa-solid fa-check-circle mr-1.5"></i>已送出，明天見！</span>
+                        <div class="flex items-center justify-center bg-sage-50/70 py-2.5 px-4 rounded-xl border border-sage-200 mb-5">
+                            <span class="text-sm font-bold text-sage-700 tracking-wide"><i class="fa-solid fa-check-circle mr-1.5"></i>您的好評已送出，明天見！</span>
                         </div>
                     `;
                 } else {
                     let stars = '';
                     for(let i=1; i<=5; i++) {
-                        stars += `<i class="fa-regular fa-star text-mocha-300 cursor-pointer hover:text-yellow-500 hover:scale-125 transition-all duration-200 px-0.5" onclick="rateFile('${file.id}', ${i})" title="給予 ${i} 顆星"></i>`;
+                        stars += `<i class="fa-regular fa-star text-mocha-200 cursor-pointer hover:text-mocha-500 hover:scale-125 transition-all duration-200 px-1" onclick="rateFile('${file.id}', ${i})" title="給予 ${i} 顆星"></i>`;
                     }
                     interactiveRatingHtml = `
-                        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-mocha-200 shadow-sm mb-4">
-                            <span class="text-sm font-bold text-mocha-700">為此網頁評分</span>
-                            <div class="flex text-lg text-yellow-500">${stars}</div>
+                        <div class="flex flex-col items-center justify-center bg-[#fdfbf7] p-3 rounded-2xl border border-mocha-200/60 shadow-inner mb-5">
+                            <span class="text-xs font-bold text-mocha-400 mb-1">為這杯特調打分數</span>
+                            <div class="flex text-2xl text-mocha-400">${stars}</div>
                         </div>
                     `;
                 }
 
-                // 🌟 【絕對定位按鈕 + 防擠壓標籤】
+                // 🌟 【點餐卡片排版】
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
-                        <!-- 絕對定位按鈕，徹底釋放左側空間 -->
-                        <div class="absolute top-0 right-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex flex-row items-center bg-white/90 backdrop-blur rounded-xl p-1 shadow-sm border border-mocha-100 z-20 gap-1">
-                            <button onclick="copyShortcut('${file.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-blue-600 hover:bg-blue-50 transition flex-shrink-0" title="複製專屬捷徑"><i class="fa-solid fa-link text-sm"></i></button>
-                            <button onclick="downloadFile('${file.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition flex-shrink-0" title="外帶下載"><i class="fa-solid fa-download text-sm"></i></button>
-                            <button onclick="openModal('edit', '${file.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition flex-shrink-0" title="編輯內容"><i class="fa-solid fa-pen text-sm"></i></button>
-                            <button onclick="deleteFile('${file.id}', '${fName}')" class="w-8 h-8 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition flex-shrink-0" title="捨棄"><i class="fa-solid fa-trash text-sm"></i></button>
+                        <!-- 右上角懸浮操作區 -->
+                        <div class="absolute -top-2 -right-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1.5 z-20">
+                            <button onclick="copyShortcut('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-blue-600 hover:border-blue-200 transition" title="複製外送連結"><i class="fa-solid fa-link text-sm"></i></button>
+                            <button onclick="downloadFile('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-sage-600 hover:border-sage-200 transition" title="打包下載"><i class="fa-solid fa-download text-sm"></i></button>
+                            <button onclick="openModal('edit', '${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-mocha-700 hover:border-mocha-300 transition" title="修改配方"><i class="fa-solid fa-pen text-sm"></i></button>
+                            <button onclick="deleteFile('${file.id}', '${fName}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-red-500 hover:border-red-200 transition" title="倒掉"><i class="fa-solid fa-trash text-sm"></i></button>
                         </div>
 
-                        <!-- 頂部標籤與平均星等 (強制單行，防擠壓) -->
-                        <div class="flex flex-nowrap items-center gap-2 mb-4 pr-[150px] overflow-hidden">
-                            <div class="inline-flex items-center text-xs md:text-sm font-bold tracking-wider px-3 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100 flex-shrink-0 whitespace-nowrap">
-                                <i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>${file.category}
+                        <!-- 頂部標籤與星等 (防擠壓) -->
+                        <div class="flex flex-nowrap items-center gap-2 mb-5 pr-12 overflow-hidden">
+                            <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-mocha-600 text-white rounded-full shadow-sm flex-shrink-0 whitespace-nowrap">
+                                <i class="fa-solid fa-tag mr-1.5 opacity-80"></i>${file.category}
                             </div>
-                            <div class="inline-flex items-center text-xs md:text-sm font-bold tracking-wider px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-lg border border-yellow-200 flex-shrink-0 whitespace-nowrap">
-                                <i class="fa-solid fa-star text-yellow-500 mr-1.5"></i>${displayAvg} (${ratings.length})
+                            <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-mocha-100 text-mocha-800 rounded-full border border-mocha-200 flex-shrink-0 whitespace-nowrap">
+                                <i class="fa-solid fa-star text-mocha-500 mr-1"></i>${displayAvg} <span class="opacity-60 ml-1 font-normal">(${ratings.length})</span>
                             </div>
                         </div>
                         
-                        <h3 class="text-xl font-bold text-mocha-900 mb-2 line-clamp-2" title="${file.name}">${file.name}</h3>
-                        <p class="text-sm md:text-base text-mocha-500 mb-4 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2 text-base"></i> ${file.developer}</p>
+                        <h3 class="text-2xl font-black text-mocha-900 mb-2 line-clamp-2 leading-tight" title="${file.name}">${file.name}</h3>
                         
-                        <div class="mb-4 flex-1 overflow-y-auto h-16 pr-2">
+                        <p class="text-sm text-mocha-500 mb-5 font-bold flex items-center bg-mocha-50 w-max px-3 py-1 rounded-lg border border-mocha-100">
+                            <i class="fa-solid fa-user-tie text-mocha-400 mr-2 text-base"></i> 咖啡師：${file.developer}
+                        </p>
+                        
+                        <!-- 風味筆記區塊 -->
+                        <div class="mb-6 flex-1 overflow-y-auto h-20 pr-2 tasting-note pl-4">
+                            <span class="block text-xs font-bold tracking-widest text-mocha-400 uppercase mb-1">Tasting Notes</span>
                             <p class="text-sm md:text-base text-mocha-700 leading-relaxed whitespace-pre-wrap">${desc}</p>
                         </div>
 
                         ${interactiveRatingHtml}
 
-                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-base md:text-lg py-3 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
-                            <i class="fa-solid fa-mug-hot mr-2.5 group-hover/btn:animate-pulse"></i> 品味網頁
+                        <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-800 text-white font-bold text-lg py-3.5 rounded-2xl hover:bg-mocha-900 transition-colors duration-300 flex items-center justify-center shadow-[0_4px_15px_rgba(112,58,44,0.3)] group/btn relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                            <i class="fa-solid fa-mug-hot mr-2.5 group-hover/btn:animate-bounce relative z-10"></i> 
+                            <span class="relative z-10 tracking-wide">☕ 端上特調</span>
                         </button>
                     </div>
                 `;
@@ -821,12 +827,12 @@
             document.getElementById('file-form').reset();
             
             if (mode === 'add') {
-                document.getElementById('modal-title').innerText = '調製新網頁';
+                document.getElementById('modal-title').innerText = '研發新特調';
                 document.getElementById('file-id').value = '';
                 document.getElementById('preview-filename').innerText = '類別-網頁名稱-開發者.html';
                 document.getElementById('file-description').value = '';
             } else if (mode === 'edit' && id) {
-                document.getElementById('modal-title').innerText = '修改網頁風味';
+                document.getElementById('modal-title').innerText = '修改特調配方';
                 const file = filesData.find(f => f.id === id);
                 if (file) {
                     document.getElementById('file-id').value = file.id;
@@ -858,7 +864,7 @@
             if (!file) return;
             currentPreviewId = id;
             
-            document.getElementById('preview-title').innerText = `${file.category}-${file.name}-${file.developer}.html`;
+            document.getElementById('preview-title').innerText = `${file.category} - ${file.name}`;
             document.getElementById('preview-frame').srcdoc = file.content;
             document.getElementById('preview-modal').classList.remove('hidden');
             document.getElementById('preview-modal').classList.add('flex');
@@ -887,7 +893,7 @@
                 newWin.document.close();
                 newWin.document.title = `${file.category}-${file.name}-${file.developer}.html`;
             } else {
-                showToast('請允許瀏覽器彈出視窗以開啟新分頁', 'error');
+                showToast('請允許瀏覽器彈出視窗以開啟外帶包', 'error');
             }
         }
 
@@ -906,14 +912,14 @@
             const text = document.getElementById('toast-message');
             
             text.innerText = msg;
-            toast.className = `fixed bottom-[90px] md:bottom-10 left-1/2 transform -translate-x-1/2 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.15)] z-[100] flex items-center space-x-3 md:space-x-4 text-white w-max max-w-[90vw]`;
+            toast.className = `fixed bottom-[90px] md:bottom-10 left-1/2 transform -translate-x-1/2 transition-all duration-300 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.2)] z-[100] flex items-center space-x-3 md:space-x-4 text-white w-max max-w-[90vw]`;
             
             if(type === 'success') {
-                toast.classList.add('bg-sage-600');
-                icon.className = 'fa-solid fa-check text-base md:text-lg bg-white/20 p-2 rounded-full flex-shrink-0';
+                toast.classList.add('bg-mocha-700');
+                icon.className = 'fa-solid fa-mug-hot text-base md:text-lg bg-white/20 p-2 rounded-full flex-shrink-0';
             } else {
-                toast.classList.add('bg-mocha-800');
-                icon.className = 'fa-solid fa-exclamation text-base md:text-lg bg-white/20 p-2 rounded-full px-3 flex-shrink-0';
+                toast.classList.add('bg-red-800');
+                icon.className = 'fa-solid fa-triangle-exclamation text-base md:text-lg bg-white/20 p-2 rounded-full px-3 flex-shrink-0';
             }
             
             toast.classList.remove('translate-y-32', 'opacity-0');
