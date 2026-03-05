@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#fdfbf7" />
     
-    <title>鳳甲AI應用教學 V.1.7</title>
+    <title>鳳甲AI應用教學 V.1.8</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
@@ -82,7 +82,7 @@
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
             <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲AI應用教學
         </div>
-        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.7</span>
+        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.8</span>
     </header>
 
     <div class="flex flex-1 overflow-hidden relative">
@@ -94,7 +94,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲AI應用教學</h1>
-                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.7</span>
+                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.8</span>
                 </div>
             </div>
             
@@ -340,6 +340,12 @@
             }
         };
 
+        // 取得今天的日期字串 (用於限制每日評分一次)
+        function getTodayString() {
+            const d = new Date();
+            return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+        }
+
         function switchMobileTab(tab) {
             document.body.setAttribute('data-mobile-tab', tab);
             document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
@@ -378,9 +384,6 @@
             }
         }
 
-        // =========================================================
-        // 【防禦升級】利用安全字元組合，完全避開平台的 HTML 檢查
-        // =========================================================
         function getSafeTag(type) {
             const chars = {
                 lt: String.fromCharCode(60),
@@ -440,7 +443,6 @@
                 return metaTag + cleanHtml; 
             }
         }
-        // =========================================================
 
         function syncDrive() {
             const folderId = getFolderId();
@@ -524,8 +526,9 @@
             const file = filesData.find(f => f.id === id);
             if(!file) return;
 
-            if(sessionStorage.getItem('rated_' + id)) {
-                showToast('您已經評分過囉！', 'error');
+            const todayStr = getTodayString();
+            if(localStorage.getItem('rated_date_' + id) === todayStr) {
+                showToast('您今天已經評分過囉！請明天再來。', 'error');
                 return;
             }
 
@@ -535,7 +538,7 @@
             ratings.push(score);
             file.content = injectRatings(file.content, ratings);
             
-            sessionStorage.setItem('rated_' + id, 'true');
+            localStorage.setItem('rated_date_' + id, todayStr);
 
             const payload = {
                 action: 'saveFile',
@@ -556,17 +559,17 @@
             .then(response => {
                 hideLoader();
                 if (response.success) {
-                    showToast('感謝您的好評！', 'success');
+                    showToast('感謝您的五星好評！', 'success');
                     renderFiles();
                 } else {
                     showToast('評分提交失敗', 'error');
-                    sessionStorage.removeItem('rated_' + id);
+                    localStorage.removeItem('rated_date_' + id);
                 }
             })
             .catch(error => {
                 hideLoader();
                 showToast('網路異常，評分失敗', 'error');
-                sessionStorage.removeItem('rated_' + id);
+                localStorage.removeItem('rated_date_' + id);
             });
         }
 
@@ -736,15 +739,16 @@
                 }
                 const displayAvg = ratings.length > 0 ? avg.toFixed(1) : '-.-';
 
-                // 產生底部互動評分區塊 (防連點與僅限一次)
-                const hasRated = sessionStorage.getItem('rated_' + file.id);
+                // 產生每日一次的底部評分互動區塊
+                const todayStr = getTodayString();
+                const hasRated = localStorage.getItem('rated_date_' + file.id) === todayStr;
                 let interactiveRatingHtml = '';
                 
                 if (hasRated) {
                     interactiveRatingHtml = `
                         <div class="flex items-center justify-between bg-sage-50/70 p-3 rounded-xl border border-sage-200 mb-4">
-                            <span class="text-sm font-bold text-sage-800">您的評價</span>
-                            <span class="text-sm font-bold text-sage-600"><i class="fa-solid fa-check-circle mr-1.5"></i>已送出，謝謝您！</span>
+                            <span class="text-sm font-bold text-sage-800">今日評價</span>
+                            <span class="text-sm font-bold text-sage-600"><i class="fa-solid fa-check-circle mr-1.5"></i>已送出，明天見！</span>
                         </div>
                     `;
                 } else {
@@ -760,10 +764,8 @@
                     `;
                 }
 
-                // 🌟 [升級] 頂部標籤與星等 (完全獨立佈局防止擠壓)
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
-                        <!-- 絕對定位操作按鈕，不會影響左側排版 -->
                         <div class="absolute top-0 right-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex flex-row items-center bg-white/90 backdrop-blur rounded-xl p-1.5 shadow-sm border border-mocha-100 z-20 gap-1">
                             <button onclick="copyShortcut('${file.id}')" class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-blue-600 hover:bg-blue-50 transition" title="複製專屬捷徑"><i class="fa-solid fa-link text-sm md:text-base"></i></button>
                             <button onclick="downloadFile('${file.id}')" class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition" title="外帶下載"><i class="fa-solid fa-download text-sm md:text-base"></i></button>
@@ -771,7 +773,6 @@
                             <button onclick="deleteFile('${file.id}', '${fName}')" class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition" title="捨棄"><i class="fa-solid fa-trash text-sm md:text-base"></i></button>
                         </div>
 
-                        <!-- 頂部標籤與平均星等 (防擠壓，保留右側 padding) -->
                         <div class="flex flex-wrap items-center gap-2 mb-4 pr-[160px] md:pr-48">
                             <div class="inline-flex items-center text-xs md:text-sm font-bold tracking-wider px-3 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100" style="white-space: nowrap;">
                                 <i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>${file.category}
