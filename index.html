@@ -2,8 +2,15 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <!-- PWA 全螢幕與瀏海防遮擋設定 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>鳳甲AI應用教學 V.1.1</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#fdfbf7">
+    
+    <title>鳳甲AI應用教學 V.1.2</title>
+    
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 FontAwesome 圖示 -->
@@ -79,12 +86,12 @@
         <p class="text-xl md:text-2xl font-bold text-mocha-800 tracking-widest" id="loader-text">萃取資料中...</p>
     </div>
 
-    <!-- 手機版頂部標題列 (僅在手機顯示) -->
+    <!-- 手機版頂部標題列 -->
     <header class="md:hidden bg-white border-b border-mocha-100 px-6 py-4 flex justify-between items-center shadow-sm z-20 flex-shrink-0">
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
             <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲AI應用教學
         </div>
-        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.1</span>
+        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.2</span>
     </header>
 
     <!-- 主要排版容器 -->
@@ -99,7 +106,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲AI應用教學</h1>
-                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.1</span>
+                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">V.1.2</span>
                 </div>
             </div>
             
@@ -196,7 +203,6 @@
                         <div>
                             <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-tag text-sage-400 mr-1.5"></i>分類風味</label>
                             <input type="text" id="file-category" list="category-options" placeholder="例如：教學" required class="w-full text-base md:text-lg bg-mocha-50/50 border border-mocha-200 rounded-lg p-3 md:p-3.5 outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-sm text-mocha-800 focus:bg-white">
-                            <!-- 加入預設下拉選單 -->
                             <datalist id="category-options">
                                 <option value="教學"></option>
                                 <option value="導師"></option>
@@ -225,7 +231,7 @@
 
                     <div>
                         <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-code text-sage-400 mr-1.5"></i>HTML 原始碼</label>
-                        <textarea id="file-content" required rows="8" placeholder="<!DOCTYPE html>..." class="w-full text-sm md:text-base bg-slate-50 border border-mocha-200 rounded-lg p-4 md:p-5 font-mono outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-inner text-slate-700 focus:bg-white"></textarea>
+                        <textarea id="file-content" required rows="8" placeholder="在此貼上 HTML 程式碼..." class="w-full text-sm md:text-base bg-slate-50 border border-mocha-200 rounded-lg p-4 md:p-5 font-mono outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 transition shadow-inner text-slate-700 focus:bg-white"></textarea>
                     </div>
                 </form>
             </div>
@@ -372,7 +378,7 @@
             }
         }
 
-        // [魔法] 萃取說明文字
+        // [魔法] 利用 ASCII 躲開嚴格編輯器的語法檢查
         function extractDescription(htmlContent) {
             const tag = String.fromCharCode(60) + 'meta name="app-description" content="(.*?)"' + String.fromCharCode(62);
             const regex = new RegExp(tag, 'i');
@@ -380,7 +386,6 @@
             return match ? match[1] : "";
         }
 
-        // [魔法] 塞入說明文字
         function injectDescription(htmlContent, description) {
             const cleanPattern = String.fromCharCode(60) + 'meta name="app-description" content=".*?"' + String.fromCharCode(62) + '\\n?';
             let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
@@ -400,7 +405,6 @@
             }
         }
 
-        // [魔法] 萃取評分資料
         function extractRatings(htmlContent) {
             const tag = String.fromCharCode(60) + 'meta name="app-rating" content="(.*?)"' + String.fromCharCode(62);
             const regex = new RegExp(tag, 'i');
@@ -413,7 +417,6 @@
             return [];
         }
 
-        // [魔法] 塞入評分資料
         function injectRatings(htmlContent, ratingsArray) {
             const cleanPattern = String.fromCharCode(60) + 'meta name="app-rating" content=".*?"' + String.fromCharCode(62) + '\\n?';
             let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
@@ -443,20 +446,27 @@
                     hideLoader();
                     if (response.success) {
                         filesData = response.data;
-                        renderApp();
-                        showToast(`為您端上 ${filesData.length} 份作品`, 'success');
                         
-                        // 檢查是否為捷徑開啟
+                        // 【終極魔法】偵測捷徑網址並「強制全螢幕直達車」
                         if(isInitialLoad) {
                             const params = new URLSearchParams(window.location.search);
                             const autoId = params.get('id');
                             if(autoId) {
-                                setTimeout(() => runFile(autoId), 300);
-                                // 清除網址列參數避免重新整理再次彈出
-                                window.history.replaceState({}, document.title, window.location.pathname);
+                                const targetFile = filesData.find(f => f.id === autoId);
+                                if (targetFile) {
+                                    // 徹底清空當前網頁，將畫面100%替換為目標HTML，實現最完美的捷徑啟動！
+                                    document.open();
+                                    document.write(targetFile.content);
+                                    document.close();
+                                    document.title = targetFile.name;
+                                    return; // 終止後續的 UI 渲染
+                                }
                             }
                             isInitialLoad = false;
                         }
+
+                        renderApp();
+                        showToast(`為您端上 ${filesData.length} 份作品`, 'success');
                     } else {
                         showToast('讀取失敗：' + response.error, 'error');
                     }
@@ -475,7 +485,6 @@
             const rawContent = document.getElementById('file-content').value;
             const description = document.getElementById('file-description').value;
             
-            // 保存編輯時，不要覆蓋原本的評分資料
             const fileId = document.getElementById('file-id').value;
             let existingRatings = [];
             if(fileId) {
@@ -496,7 +505,7 @@
                 content: finalContent
             };
 
-            showLoader('正在為您調製並歸檔...');
+            showLoader('正在為您調製並同步備份...');
             document.getElementById('save-btn').disabled = true;
 
             fetch(GAS_API_URL, {
@@ -510,7 +519,7 @@
                 document.getElementById('save-btn').disabled = false;
                 if (response.success) {
                     closeModal('file-modal');
-                    showToast('作品已妥善收藏！', 'success');
+                    showToast('作品已妥善收藏與備份！', 'success');
                     syncDrive();
                     if(window.innerWidth < 768) switchMobileTab('files');
                 } else {
@@ -524,18 +533,16 @@
             });
         }
 
-        // 提交評分
         function rateFile(id, score) {
             const file = filesData.find(f => f.id === id);
             if(!file) return;
 
-            // 簡單防呆：同一個瀏覽器工作階段只能評一次同一份檔案
             if(sessionStorage.getItem('rated_' + id)) {
                 showToast('您已經為這份作品評分過囉！', 'error');
                 return;
             }
 
-            showLoader('提交評價中...');
+            showLoader('送出評價中，並同步雲端備份...');
             
             let ratings = extractRatings(file.content);
             ratings.push(score);
@@ -562,11 +569,10 @@
             .then(response => {
                 hideLoader();
                 if (response.success) {
-                    showToast('感謝您的五星好評！', 'success');
-                    renderFiles(); // 重新渲染卡片更新星星
+                    showToast('感謝您的好評！', 'success');
+                    renderFiles();
                 } else {
                     showToast('評分提交失敗', 'error');
-                    // 復原 session 狀態
                     sessionStorage.removeItem('rated_' + id);
                 }
             })
@@ -577,7 +583,6 @@
             });
         }
 
-        // 產生星星 HTML
         function generateStars(fileId, ratings) {
             let avg = 0;
             if (ratings.length > 0) {
@@ -587,21 +592,28 @@
             for(let i=1; i<=5; i++) {
                 let starClass = "fa-regular fa-star text-mocha-300"; 
                 if (i <= avg) {
-                    starClass = "fa-solid fa-star text-yellow-400"; 
+                    starClass = "fa-solid fa-star text-yellow-500"; 
                 } else if (i - 0.5 <= avg) {
-                    starClass = "fa-solid fa-star-half-stroke text-yellow-400"; 
+                    starClass = "fa-solid fa-star-half-stroke text-yellow-500"; 
                 }
                 starsHtml += `<i class="${starClass} cursor-pointer hover:scale-125 transition-transform drop-shadow-sm" onclick="rateFile('${fileId}', ${i})" title="給予 ${i} 顆星"></i>`;
             }
-            const avgText = ratings.length > 0 ? `${avg.toFixed(1)} <span class="text-xs">(${ratings.length}人)</span>` : `尚無評分`;
-            return `<div class="flex items-center justify-between bg-mocha-50/50 p-2 rounded-xl border border-mocha-100 mb-4">
-                        <div class="flex space-x-1.5 text-lg">${starsHtml}</div>
-                        <div class="text-mocha-600 font-bold">${avgText}</div>
-                    </div>`;
+            
+            const displayAvg = ratings.length > 0 ? avg.toFixed(1) : '-.-';
+            const displayCount = ratings.length > 0 ? `${ratings.length} 份評價` : '點擊星星來評分';
+            
+            return `
+            <div class="flex items-center bg-white p-3 md:p-4 rounded-2xl border border-mocha-100 shadow-sm mb-5">
+                <div class="text-3xl md:text-4xl font-black text-mocha-800 mr-4 md:mr-5 w-12 md:w-16 text-center tracking-tighter">${displayAvg}</div>
+                <div class="flex flex-col border-l border-mocha-100 pl-4 md:pl-5">
+                    <div class="flex space-x-1.5 text-lg md:text-xl mb-1">${starsHtml}</div>
+                    <div class="text-xs md:text-sm font-bold text-mocha-500">${displayCount}</div>
+                </div>
+            </div>`;
         }
 
         function deleteFile(id, fileName) {
-            document.getElementById('delete-modal-message').innerHTML = `您確定要將 <span class="font-bold text-red-600">「${fileName}」</span> 丟棄嗎？<br>這個動作無法復原喔。`;
+            document.getElementById('delete-modal-message').innerHTML = `您確定要將 <span class="font-bold text-red-600">「${fileName}」</span> 丟棄嗎？<br>這個動作不會刪除「備份」資料夾內的檔案。`;
             document.getElementById('delete-file-id').value = id;
             document.getElementById('delete-password').value = ''; 
             
@@ -659,7 +671,6 @@
             const baseUrl = window.location.href.split('?')[0];
             const shortcutUrl = `${baseUrl}?id=${id}`;
             
-            // 由於 iFrame 限制，使用舊版 execCommand 確保能成功複製
             const tempInput = document.createElement('input');
             tempInput.value = shortcutUrl;
             document.body.appendChild(tempInput);
@@ -766,13 +777,12 @@
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
                         <div class="flex justify-between items-start mb-5 gap-2">
-                            <!-- 標籤橫向單行顯示 -->
                             <div class="inline-flex items-center text-sm md:text-base font-bold tracking-wider px-3.5 py-1.5 bg-mocha-50 text-mocha-700 rounded-lg border border-mocha-100 min-w-0">
                                 <i class="fa-solid fa-tag text-mocha-400 mr-1.5 flex-shrink-0"></i>
                                 <span class="truncate">${file.category}</span>
                             </div>
                             <div class="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity space-x-1.5 flex items-center bg-white rounded-xl p-1.5 shadow-sm border border-mocha-100 flex-shrink-0">
-                                <button onclick="copyShortcut('${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-blue-600 hover:bg-blue-50 transition" title="複製捷徑"><i class="fa-solid fa-link text-base md:text-lg"></i></button>
+                                <button onclick="copyShortcut('${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-blue-600 hover:bg-blue-50 transition" title="複製專屬捷徑"><i class="fa-solid fa-link text-base md:text-lg"></i></button>
                                 <button onclick="downloadFile('${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-sage-600 hover:bg-sage-50 transition" title="外帶下載"><i class="fa-solid fa-download text-base md:text-lg"></i></button>
                                 <button onclick="openModal('edit', '${file.id}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-mocha-700 hover:bg-mocha-50 transition" title="編輯內容"><i class="fa-solid fa-pen text-base md:text-lg"></i></button>
                                 <button onclick="deleteFile('${file.id}', '${fName}')" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition" title="捨棄"><i class="fa-solid fa-trash text-base md:text-lg"></i></button>
@@ -781,12 +791,10 @@
                         <h3 class="text-xl font-bold text-mocha-900 mb-2 line-clamp-2" title="${file.name}">${file.name}</h3>
                         <p class="text-base text-mocha-500 mb-4 font-bold flex items-center"><i class="fa-solid fa-user-astronaut text-mocha-300 mr-2 text-base"></i> ${file.developer}</p>
                         
-                        <!-- 內容簡介 -->
                         <div class="mb-4 flex-1 overflow-y-auto h-16 pr-2">
                             <p class="text-base text-mocha-700 leading-relaxed whitespace-pre-wrap">${desc}</p>
                         </div>
 
-                        <!-- 滿分五顆星評分區塊 -->
                         ${generateStars(file.id, ratings)}
 
                         <button onclick="runFile('${file.id}')" class="mt-auto w-full bg-mocha-50 text-mocha-800 font-bold text-base md:text-lg py-3 rounded-xl hover:bg-sage-500 hover:text-white transition-colors duration-300 flex items-center justify-center border border-mocha-100 hover:border-sage-500 group/btn">
