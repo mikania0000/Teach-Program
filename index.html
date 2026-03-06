@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#fdfbf7" />
     
-    <title>鳳甲AI咖啡館 V.1.15</title>
+    <title>鳳甲AI咖啡館 V.1.16</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
@@ -94,7 +94,7 @@
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
             <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲 AI 咖啡館
         </div>
-        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.15</span>
+        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.16</span>
     </header>
 
     <div class="flex flex-1 overflow-hidden relative">
@@ -106,7 +106,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲 AI 咖啡館</h1>
-                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">應用教學 V.1.15</span>
+                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">應用教學 V.1.16</span>
                 </div>
             </div>
             
@@ -499,7 +499,6 @@
             }
         }
 
-        // 🌟 新增：解析與寫入適用設備
         function extractDevice(htmlContent) {
             const tag = getSafeTag('lt') + 'meta name="app-device" content="([^"]*?)"' + getSafeTag('gt');
             const regex = new RegExp(tag, 'i');
@@ -566,7 +565,7 @@
             let finalContent = injectDescription(rawContent, description);
             finalContent = injectRatings(finalContent, existingRatings);
             finalContent = injectDownloads(finalContent, existingDownloads);
-            finalContent = injectDevice(finalContent, device); // 🌟 寫入適用設備
+            finalContent = injectDevice(finalContent, device); 
 
             const payload = {
                 action: 'saveFile',
@@ -735,6 +734,38 @@
             }).catch(e => console.error('下載數同步失敗', e));
         }
 
+        // 🌟 新增：產生桌面捷徑檔案的魔法
+        function createShortcut(id, name) {
+            const baseUrl = window.location.href.split('?')[0];
+            const targetUrl = `${baseUrl}?id=${id}`;
+            
+            // 建立一個安全跳轉的 HTML 作為捷徑
+            const htmlContent = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=${targetUrl}">
+    <title>正在開啟 ${name}...</title>
+</head>
+<body style="background-color: #fdfbf7; font-family: sans-serif; text-align: center; padding-top: 20vh;">
+    <h2 style="color: #703a2c;">正在為您開啟「${name}」...</h2>
+    <p style="color: #a35a39; margin-top: 10px;">若沒有自動跳轉，請 <a href="${targetUrl}" style="color: #38bdf8;">點擊這裡</a>。</p>
+    <script>window.location.href = "${targetUrl}";<\/script>
+</body>
+</html>`;
+            
+            const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${name}_桌面捷徑.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('桌面捷徑已下載！請將它拖曳到桌面使用', 'success');
+        }
+
         function copyShortcut(id) {
             const baseUrl = window.location.href.split('?')[0];
             const shortcutUrl = `${baseUrl}?id=${id}`;
@@ -876,9 +907,8 @@
                 const desc = extractDescription(file.content) || "咖啡師還沒寫下這杯特調的故事...";
                 const ratings = extractRatings(file.content);
                 const downloads = extractDownloads(file.content); 
-                const device = extractDevice(file.content) || "均可"; // 🌟 解析適用設備
+                const device = extractDevice(file.content) || "均可"; 
 
-                // 設定對應的設備圖示
                 let deviceIconHtml = '';
                 if (device === '手機') {
                     deviceIconHtml = '<i class="fa-solid fa-mobile-screen-button mr-1.5"></i>手機';
@@ -927,13 +957,15 @@
                 card.innerHTML += `
                     <div class="relative z-10 flex flex-col h-full">
                         <div class="absolute -top-2 -right-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1.5 z-20">
-                            <button onclick="copyShortcut('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-blue-600 hover:border-blue-200 transition" title="複製外送連結"><i class="fa-solid fa-link text-sm"></i></button>
-                            <button onclick="downloadFile('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-sage-600 hover:border-sage-200 transition" title="打包下載"><i class="fa-solid fa-download text-sm"></i></button>
-                            <button onclick="openModal('edit', '${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-mocha-700 hover:border-mocha-300 transition" title="修改配方"><i class="fa-solid fa-pen text-sm"></i></button>
-                            <button onclick="deleteFile('${file.id}', '${fName}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-red-500 hover:border-red-200 transition" title="倒掉"><i class="fa-solid fa-trash text-sm"></i></button>
+                            <button onclick="copyShortcut('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-blue-600 hover:border-blue-200 transition flex-shrink-0" title="複製外送連結"><i class="fa-solid fa-link text-sm md:text-base"></i></button>
+                            <!-- 🌟 新增的下載桌面捷徑按鈕 -->
+                            <button onclick="createShortcut('${file.id}', '${file.name}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-purple-600 hover:border-purple-200 transition flex-shrink-0" title="下載桌面捷徑"><i class="fa-solid fa-desktop text-sm md:text-base"></i></button>
+                            <button onclick="downloadFile('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-sage-600 hover:border-sage-200 transition flex-shrink-0" title="打包下載"><i class="fa-solid fa-download text-sm md:text-base"></i></button>
+                            <button onclick="openModal('edit', '${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-mocha-700 hover:border-mocha-300 transition flex-shrink-0" title="修改配方"><i class="fa-solid fa-pen text-sm md:text-base"></i></button>
+                            <button onclick="deleteFile('${file.id}', '${fName}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-red-500 hover:border-red-200 transition flex-shrink-0" title="倒掉"><i class="fa-solid fa-trash text-sm md:text-base"></i></button>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-2 mb-4 pr-12 overflow-hidden">
+                        <div class="flex flex-wrap items-center gap-2 mb-4 pr-[45px] md:pr-12 overflow-hidden">
                             <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-mocha-600 text-white rounded-full shadow-sm flex-shrink-0 whitespace-nowrap">
                                 <i class="fa-solid fa-tag mr-1.5 opacity-80"></i>${file.category}
                             </div>
@@ -943,7 +975,6 @@
                             <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-cyan-50 text-cyan-700 rounded-full border border-cyan-200 flex-shrink-0 whitespace-nowrap">
                                 <i class="fa-solid fa-cloud-arrow-down mr-1.5 opacity-80"></i>${downloads} 次
                             </div>
-                            <!-- 🌟 新增適用設備標籤 -->
                             <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-200 flex-shrink-0 whitespace-nowrap">
                                 ${deviceIconHtml}
                             </div>
@@ -994,7 +1025,7 @@
                 document.getElementById('file-id').value = '';
                 document.getElementById('preview-filename').innerText = '類別-網頁名稱-開發者.html';
                 document.getElementById('file-description').value = '';
-                document.getElementById('file-device').value = '均可'; // 🌟 預設值
+                document.getElementById('file-device').value = '均可';
             } else if (mode === 'edit' && id) {
                 document.getElementById('modal-title').innerText = '修改特調配方';
                 const file = filesData.find(f => f.id === id);
@@ -1005,7 +1036,7 @@
                     document.getElementById('file-developer').value = file.developer;
                     document.getElementById('file-content').value = file.content;
                     document.getElementById('file-description').value = extractDescription(file.content);
-                    document.getElementById('file-device').value = extractDevice(file.content) || '均可'; // 🌟 載入設備
+                    document.getElementById('file-device').value = extractDevice(file.content) || '均可';
                     document.getElementById('preview-filename').innerText = `${file.category}-${file.name}-${file.developer}.html`;
                 }
             }
