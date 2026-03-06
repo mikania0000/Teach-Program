@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#fdfbf7" />
     
-    <title>鳳甲AI咖啡館 V.1.13</title>
+    <title>鳳甲AI咖啡館 V.1.15</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
@@ -94,7 +94,7 @@
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
             <i class="fa-solid fa-store text-mocha-500 mr-2.5 text-2xl"></i> 鳳甲 AI 咖啡館
         </div>
-        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.13</span>
+        <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2 py-1 rounded-md border border-mocha-200 shadow-sm">V.1.15</span>
     </header>
 
     <div class="flex flex-1 overflow-hidden relative">
@@ -106,7 +106,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold text-mocha-800 tracking-wide leading-tight">鳳甲 AI 咖啡館</h1>
-                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">應用教學 V.1.13</span>
+                    <span class="text-xs font-bold text-mocha-500 bg-mocha-100 px-2.5 py-0.5 rounded-md mt-1 inline-block border border-mocha-200 shadow-sm">應用教學 V.1.15</span>
                 </div>
             </div>
             
@@ -200,7 +200,7 @@
                 <form id="file-form" class="space-y-6 md:space-y-8 relative z-10">
                     <input type="hidden" id="file-id" />
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                         <div>
                             <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-tag text-mocha-400 mr-1.5"></i>風味系列</label>
                             <input type="text" id="file-category" list="category-options" placeholder="例如：教學" required class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-mocha-500 focus:border-mocha-500 transition shadow-sm text-mocha-800" />
@@ -217,6 +217,14 @@
                         <div>
                             <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-user-tie text-mocha-400 mr-1.5"></i>咖啡師 (開發者)</label>
                             <input type="text" id="file-developer" placeholder="例如：您的名字" required class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-mocha-500 focus:border-mocha-500 transition shadow-sm text-mocha-800" />
+                        </div>
+                        <div>
+                            <label class="block text-sm md:text-base font-bold text-mocha-700 mb-2"><i class="fa-solid fa-display text-mocha-400 mr-1.5"></i>適用設備</label>
+                            <select id="file-device" required class="w-full text-base md:text-lg bg-white border border-mocha-200 rounded-xl p-3 md:p-[15px] outline-none focus:ring-2 focus:ring-mocha-500 focus:border-mocha-500 transition shadow-sm text-mocha-800 cursor-pointer">
+                                <option value="均可">均可 (手機 / 電腦)</option>
+                                <option value="手機">手機專屬</option>
+                                <option value="大螢幕">大螢幕專屬</option>
+                            </select>
                         </div>
                     </div>
 
@@ -302,7 +310,7 @@
             </div>
             <div class="p-6 md:p-8 bg-[#fffdfa]">
                 <p class="text-base md:text-lg text-mocha-700 mb-5 md:mb-6 leading-relaxed" id="delete-modal-message">確定要捨棄嗎？</p>
-                <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">請輸入經理授權密碼以核對</label>
+                <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">請輸入經理授權密碼</label>
                 <input type="password" id="delete-password" placeholder="••••••" class="w-full text-center text-xl tracking-[0.5em] bg-white border border-red-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-red-400 font-mono shadow-sm transition" />
                 <input type="hidden" id="delete-file-id" />
             </div>
@@ -326,10 +334,9 @@
         
         let filesData = [];
         let currentCategory = 'all';
-        let currentDeveloper = 'all'; // 儲存目前選取的咖啡師
+        let currentDeveloper = 'all'; 
         let currentPreviewId = null;
 
-        // 🌈 咖啡師專屬色系對應表
         const developerColors = [
             { inactive: 'bg-orange-100 text-orange-700 hover:bg-orange-200', active: 'bg-orange-500 text-white shadow-md' },
             { inactive: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200', active: 'bg-emerald-500 text-white shadow-md' },
@@ -471,6 +478,49 @@
             }
         }
 
+        function extractDownloads(htmlContent) {
+            const tag = getSafeTag('lt') + 'meta name="app-downloads" content="(\\d+)"' + getSafeTag('gt');
+            const regex = new RegExp(tag, 'i');
+            const match = htmlContent.match(regex);
+            return match ? parseInt(match[1], 10) : 0;
+        }
+
+        function injectDownloads(htmlContent, count) {
+            const cleanPattern = getSafeTag('lt') + 'meta\\s+name=["\']app-downloads["\']\\s+content=["\']\\d+["\']\\s*\\/?' + getSafeTag('gt') + '\\n?';
+            let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
+
+            const metaTag = getSafeTag('lt') + 'meta name="app-downloads" content="' + count + '"' + getSafeTag('gt') + '\n';
+            if (cleanHtml.includes(getSafeTag('hEnd'))) {
+                return cleanHtml.replace(getSafeTag('hEnd'), metaTag + getSafeTag('hEnd'));
+            } else if (cleanHtml.includes(getSafeTag('hStart'))) {
+                return cleanHtml.replace(getSafeTag('hStart'), getSafeTag('hStart') + '\n' + getSafeTag('hdStart') + '\n' + metaTag + getSafeTag('hEnd'));
+            } else {
+                return metaTag + cleanHtml; 
+            }
+        }
+
+        // 🌟 新增：解析與寫入適用設備
+        function extractDevice(htmlContent) {
+            const tag = getSafeTag('lt') + 'meta name="app-device" content="([^"]*?)"' + getSafeTag('gt');
+            const regex = new RegExp(tag, 'i');
+            const match = htmlContent.match(regex);
+            return match ? match[1] : "均可";
+        }
+
+        function injectDevice(htmlContent, device) {
+            const cleanPattern = getSafeTag('lt') + 'meta\\s+name=["\']app-device["\']\\s+content=["\'].*?["\']\\s*\\/?' + getSafeTag('gt') + '\\n?';
+            let cleanHtml = htmlContent.replace(new RegExp(cleanPattern, 'gi'), '');
+
+            const metaTag = getSafeTag('lt') + 'meta name="app-device" content="' + device + '"' + getSafeTag('gt') + '\n';
+            if (cleanHtml.includes(getSafeTag('hEnd'))) {
+                return cleanHtml.replace(getSafeTag('hEnd'), metaTag + getSafeTag('hEnd'));
+            } else if (cleanHtml.includes(getSafeTag('hStart'))) {
+                return cleanHtml.replace(getSafeTag('hStart'), getSafeTag('hStart') + '\n' + getSafeTag('hdStart') + '\n' + metaTag + getSafeTag('hEnd'));
+            } else {
+                return metaTag + cleanHtml; 
+            }
+        }
+
         function syncDrive() {
             const folderId = getFolderId();
             showLoader('咖啡師為您準備菜單中...');
@@ -500,16 +550,23 @@
 
             const rawContent = document.getElementById('file-content').value;
             const description = document.getElementById('file-description').value;
+            const device = document.getElementById('file-device').value;
             
             const fileId = document.getElementById('file-id').value;
             let existingRatings = [];
+            let existingDownloads = 0; 
             if(fileId) {
                 const existingFile = filesData.find(f => f.id === fileId);
-                if(existingFile) existingRatings = extractRatings(existingFile.content);
+                if(existingFile) {
+                    existingRatings = extractRatings(existingFile.content);
+                    existingDownloads = extractDownloads(existingFile.content);
+                }
             }
 
             let finalContent = injectDescription(rawContent, description);
             finalContent = injectRatings(finalContent, existingRatings);
+            finalContent = injectDownloads(finalContent, existingDownloads);
+            finalContent = injectDevice(finalContent, device); // 🌟 寫入適用設備
 
             const payload = {
                 action: 'saveFile',
@@ -644,6 +701,7 @@
         function downloadFile(id) {
             const file = filesData.find(f => f.id === id);
             if(!file) return;
+
             const filename = `${file.category}-${file.name}-${file.developer}.html`;
             const blob = new Blob([file.content], { type: "text/html;charset=utf-8" });
             const url = URL.createObjectURL(blob);
@@ -653,6 +711,28 @@
             a.click();
             URL.revokeObjectURL(url);
             showToast(`已為您打包好：${filename}`, 'success');
+
+            let currentDownloads = extractDownloads(file.content);
+            currentDownloads++;
+            file.content = injectDownloads(file.content, currentDownloads);
+            
+            renderFiles();
+
+            const payload = {
+                action: 'saveFile',
+                folderId: getFolderId(),
+                fileId: file.id,
+                category: file.category,
+                name: file.name,
+                developer: file.developer,
+                content: file.content
+            };
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            }).catch(e => console.error('下載數同步失敗', e));
         }
 
         function copyShortcut(id) {
@@ -713,7 +793,7 @@
                 btn.className = `w-full text-left px-5 py-4 rounded-2xl mb-2 flex items-center justify-between transition duration-200 group ${isSelected ? 'bg-mocha-600 text-white font-bold shadow-md' : 'text-mocha-600 hover:bg-mocha-100 font-bold border border-transparent hover:border-mocha-200'}`;
                 btn.onclick = () => {
                     currentCategory = cat;
-                    currentDeveloper = 'all'; // 切換大分類時，自動重置咖啡師選擇
+                    currentDeveloper = 'all'; 
                     document.getElementById('current-category-title').innerText = title;
                     renderApp();
                     if(window.innerWidth < 768) {
@@ -731,12 +811,10 @@
             });
         }
 
-        // 🌟 產生咖啡師分頁標籤
         function renderDeveloperTabs() {
             const container = document.getElementById('developer-tabs-container');
             container.innerHTML = '';
 
-            // 抓出目前風味底下有哪幾位咖啡師
             const categoryFiles = currentCategory === 'all' ? filesData : filesData.filter(f => f.category === currentCategory);
             const developers = [...new Set(categoryFiles.map(f => f.developer))].filter(d => d).sort();
 
@@ -746,7 +824,6 @@
             }
             container.style.display = 'flex';
 
-            // 建立「全部咖啡師」按鈕
             const allBtn = document.createElement('button');
             const isAllSelected = currentDeveloper === 'all';
             allBtn.className = `whitespace-nowrap px-4 py-1.5 md:py-2 rounded-full font-bold text-sm md:text-base transition-all duration-300 flex-shrink-0 ${isAllSelected ? 'bg-mocha-800 text-white shadow-md' : 'bg-mocha-100 text-mocha-600 hover:bg-mocha-200'}`;
@@ -758,7 +835,6 @@
             };
             container.appendChild(allBtn);
 
-            // 建立個別咖啡師專屬顏色按鈕
             developers.forEach((dev, index) => {
                 const isSelected = currentDeveloper === dev;
                 const colors = developerColors[index % developerColors.length];
@@ -778,7 +854,6 @@
         function renderFiles() {
             const container = document.getElementById('files-container');
             
-            // 同時套用「風味分類」與「咖啡師」雙重篩選
             let files = currentCategory === 'all' ? filesData : filesData.filter(f => f.category === currentCategory);
             if (currentDeveloper !== 'all') {
                 files = files.filter(f => f.developer === currentDeveloper);
@@ -800,6 +875,18 @@
                 const fName = `${file.category}-${file.name}-${file.developer}.html`;
                 const desc = extractDescription(file.content) || "咖啡師還沒寫下這杯特調的故事...";
                 const ratings = extractRatings(file.content);
+                const downloads = extractDownloads(file.content); 
+                const device = extractDevice(file.content) || "均可"; // 🌟 解析適用設備
+
+                // 設定對應的設備圖示
+                let deviceIconHtml = '';
+                if (device === '手機') {
+                    deviceIconHtml = '<i class="fa-solid fa-mobile-screen-button mr-1.5"></i>手機';
+                } else if (device === '大螢幕') {
+                    deviceIconHtml = '<i class="fa-solid fa-desktop mr-1.5"></i>大螢幕';
+                } else {
+                    deviceIconHtml = '<i class="fa-solid fa-mobile-screen-button mr-1"></i><i class="fa-solid fa-desktop mr-1.5"></i>均可';
+                }
 
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-[2rem] shadow-[0_4px_20px_rgba(136,70,50,0.05)] hover:shadow-[0_10px_30px_rgba(136,70,50,0.12)] border border-mocha-100/50 transition-all duration-300 p-6 md:p-8 flex flex-col group relative overflow-hidden';
@@ -846,12 +933,19 @@
                             <button onclick="deleteFile('${file.id}', '${fName}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-red-500 hover:border-red-200 transition" title="倒掉"><i class="fa-solid fa-trash text-sm"></i></button>
                         </div>
 
-                        <div class="flex flex-nowrap items-center gap-2 mb-5 pr-12 overflow-hidden">
+                        <div class="flex flex-wrap items-center gap-2 mb-4 pr-12 overflow-hidden">
                             <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-mocha-600 text-white rounded-full shadow-sm flex-shrink-0 whitespace-nowrap">
                                 <i class="fa-solid fa-tag mr-1.5 opacity-80"></i>${file.category}
                             </div>
-                            <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-mocha-100 text-mocha-800 rounded-full border border-mocha-200 flex-shrink-0 whitespace-nowrap">
-                                <i class="fa-solid fa-star text-mocha-500 mr-1"></i>${displayAvg} <span class="opacity-60 ml-1 font-normal">(${ratings.length})</span>
+                            <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full border border-yellow-200 flex-shrink-0 whitespace-nowrap">
+                                <i class="fa-solid fa-star text-yellow-500 mr-1"></i>${displayAvg} <span class="opacity-60 ml-1 font-normal">(${ratings.length})</span>
+                            </div>
+                            <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-cyan-50 text-cyan-700 rounded-full border border-cyan-200 flex-shrink-0 whitespace-nowrap">
+                                <i class="fa-solid fa-cloud-arrow-down mr-1.5 opacity-80"></i>${downloads} 次
+                            </div>
+                            <!-- 🌟 新增適用設備標籤 -->
+                            <div class="inline-flex items-center text-xs font-bold tracking-wider px-3 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-200 flex-shrink-0 whitespace-nowrap">
+                                ${deviceIconHtml}
                             </div>
                         </div>
                         
@@ -900,6 +994,7 @@
                 document.getElementById('file-id').value = '';
                 document.getElementById('preview-filename').innerText = '類別-網頁名稱-開發者.html';
                 document.getElementById('file-description').value = '';
+                document.getElementById('file-device').value = '均可'; // 🌟 預設值
             } else if (mode === 'edit' && id) {
                 document.getElementById('modal-title').innerText = '修改特調配方';
                 const file = filesData.find(f => f.id === id);
@@ -910,6 +1005,7 @@
                     document.getElementById('file-developer').value = file.developer;
                     document.getElementById('file-content').value = file.content;
                     document.getElementById('file-description').value = extractDescription(file.content);
+                    document.getElementById('file-device').value = extractDevice(file.content) || '均可'; // 🌟 載入設備
                     document.getElementById('preview-filename').innerText = `${file.category}-${file.name}-${file.developer}.html`;
                 }
             }
