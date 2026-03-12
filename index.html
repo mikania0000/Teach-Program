@@ -13,6 +13,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- 引入 HTML5 QR Code 掃描套件 -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <script>
         tailwind.config = {
@@ -89,6 +91,48 @@
         <p class="text-xl md:text-2xl font-bold text-mocha-800 tracking-widest" id="loader-text">咖啡師為您沖泡中...</p>
     </div>
 
+    <!-- QR Code / 密碼認證門禁 (進入時顯示) -->
+    <div id="auth-overlay" class="fixed inset-0 bg-mocha-900/95 backdrop-blur-md z-[1000] hidden flex-col items-center justify-center fade-in px-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border-t-8 border-mocha-600">
+            <div class="p-8 text-center bg-[#fffdfa] relative">
+                <i class="fa-solid fa-store text-mocha-200 text-6xl absolute top-4 left-4 opacity-20"></i>
+                <i class="fa-solid fa-lock-open text-mocha-500 text-5xl mb-4 relative z-10 drop-shadow-sm"></i>
+                <h2 class="text-2xl font-black text-mocha-900 mb-2 relative z-10">專屬門禁</h2>
+                <p class="text-mocha-500 text-sm font-bold mb-4 relative z-10">請輸入密碼或用手機掃描條碼</p>
+
+                <!-- 顯示給手機掃描的快速登入 QR Code -->
+                <div class="flex flex-col items-center mb-5 relative z-10">
+                    <div class="bg-white p-2 rounded-xl shadow-sm border border-mocha-100">
+                        <img id="auth-qr-image" src="" class="w-32 h-32" alt="手機掃碼快速進入">
+                    </div>
+                    <p class="text-xs text-mocha-500 mt-2 font-bold flex items-center justify-center">
+                        <i class="fa-solid fa-mobile-screen mr-1.5 text-mocha-400"></i>手機掃描免密碼直接登入
+                    </p>
+                </div>
+
+                <!-- QR Scanner 顯示區 (用來反向掃描別人的條碼) -->
+                <div id="qr-reader" class="w-full hidden mb-5 rounded-xl overflow-hidden border-2 border-mocha-200 bg-black"></div>
+
+                <div class="space-y-4 relative z-10" id="auth-inputs">
+                    <input type="password" id="auth-password" placeholder="請輸入密碼" class="w-full text-center text-xl tracking-widest bg-white border border-mocha-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-mocha-500 shadow-sm transition" />
+                    <button onclick="verifyPassword()" class="w-full bg-mocha-600 hover:bg-mocha-700 text-white font-bold py-3.5 rounded-xl transition shadow-md flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i> 進入咖啡館
+                    </button>
+                    
+                    <div class="relative flex items-center py-2">
+                        <div class="flex-grow border-t border-mocha-200"></div>
+                        <span class="flex-shrink-0 mx-4 text-mocha-400 text-sm font-bold">反向掃描</span>
+                        <div class="flex-grow border-t border-mocha-200"></div>
+                    </div>
+                    
+                    <button onclick="toggleQRScanner()" id="qr-btn" class="w-full bg-sage-50 hover:bg-sage-100 text-sage-700 border border-sage-200 font-bold py-3.5 rounded-xl transition shadow-sm flex items-center justify-center">
+                        <i class="fa-solid fa-qrcode mr-2 text-lg"></i> 開啟相機掃描 QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 手機版頂部標題列 -->
     <header class="md:hidden bg-white border-b border-mocha-100 px-6 py-4 flex justify-between items-center shadow-sm z-20 flex-shrink-0">
         <div class="flex items-center text-mocha-800 font-bold text-xl tracking-wide">
@@ -117,7 +161,7 @@
                 <div class="p-5 flex-1 overflow-y-auto space-y-1.5 relative" id="category-list"></div>
             </div>
             
-            <div id="section-actions" class="hidden md:block p-5 border-t border-mocha-100 space-y-3 bg-mocha-50/30">
+            <div id="section-actions" class="hidden md:block p-5 border-t border-mocha-100 space-y-3 bg-mocha-50/30 overflow-y-auto">
                 <div class="md:hidden pb-4 text-center text-mocha-800 font-bold text-xl flex items-center justify-center border-b border-mocha-100 mb-4">
                     <i class="fa-solid fa-concierge-bell text-mocha-500 mr-2"></i> 櫃台服務
                 </div>
@@ -135,6 +179,11 @@
                 </button>
                 <button onclick="openSettings()" class="w-full text-mocha-400 hover:text-mocha-600 font-bold py-2 text-sm transition flex items-center justify-center mt-2 group">
                     <i class="fa-solid fa-sliders mr-2 group-hover:rotate-90 transition-transform"></i> 咖啡館設定
+                </button>
+                
+                <!-- 新增登出按鈕 -->
+                <button onclick="logoutApp()" class="w-full text-red-400 hover:text-red-600 font-bold py-2 text-sm transition flex items-center justify-center mt-1 group">
+                    <i class="fa-solid fa-right-from-bracket mr-2 group-hover:-translate-x-1 transition-transform"></i> 登出並清除手機記憶
                 </button>
             </div>
         </aside>
@@ -311,7 +360,7 @@
             <div class="p-6 md:p-8 bg-[#fffdfa]">
                 <p class="text-base md:text-lg text-mocha-700 mb-5 md:mb-6 leading-relaxed" id="delete-modal-message">確定要捨棄嗎？</p>
                 <label class="block text-base md:text-lg font-bold text-mocha-700 mb-3">請輸入經理授權密碼</label>
-                <input type="password" id="delete-password" placeholder="••••••" class="w-full text-center text-xl tracking-[0.5em] bg-white border border-red-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-red-400 font-mono shadow-sm transition" />
+                <input type="password" id="delete-password" placeholder="•••••••••" class="w-full text-center text-xl tracking-[0.5em] bg-white border border-red-200 rounded-xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-red-400 font-mono shadow-sm transition" />
                 <input type="hidden" id="delete-file-id" />
             </div>
             <div class="p-5 md:p-7 border-t border-mocha-100 flex justify-end space-x-3 md:space-x-4 bg-red-50/30">
@@ -329,8 +378,10 @@
     </div>
 
     <script>
+        // ------------------ 設定區塊 ------------------ //
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyR9A2BZDZM7mtG12iz6ra2zFZKO-YX4zU2GFsJ93xAN4e8nYTFarSlBTC3FK7tnkcM/exec";
         const DEFAULT_FOLDER_ID = "155vRl7rDF-acfHXo0vbkDRt-ZQhQRNqO";
+        const APP_PASSWORD = "300300"; // 網頁與GS同步更新的密碼
         
         let filesData = [];
         let currentCategory = 'all';
@@ -348,7 +399,108 @@
             { inactive: 'bg-pink-100 text-pink-700 hover:bg-pink-200', active: 'bg-pink-500 text-white shadow-md' }
         ];
 
+        // ------------------ 門禁系統邏輯 ------------------ //
         window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const urlPwd = params.get('pwd');
+
+            // 如果 URL 中有帶正確的密碼 (手機掃碼帶入的情況)
+            if (urlPwd === APP_PASSWORD) {
+                localStorage.setItem('coffee_auth', APP_PASSWORD);
+                
+                // 為了美觀，將網址上的 pwd 參數清掉，但保留如果有 id 的參數
+                const base = window.location.href.split('?')[0];
+                const autoIdParams = params.get('id') ? `?id=${params.get('id')}` : '';
+                window.history.replaceState(null, '', base + autoIdParams);
+                
+                initializeApp();
+            } 
+            // 檢查手機/瀏覽器是否已經記憶過密碼
+            else if (localStorage.getItem('coffee_auth') === APP_PASSWORD) {
+                initializeApp();
+            } else {
+                // 如果沒有記憶，就顯示門禁遮罩
+                document.getElementById('auth-overlay').classList.remove('hidden');
+                document.getElementById('auth-overlay').classList.add('flex');
+
+                // 自動產生專屬快速通關 QR Code，將密碼隱藏在網址中
+                const currentUrl = window.location.href.split('?')[0];
+                const autoIdParams = params.get('id') ? `&id=${params.get('id')}` : '';
+                const qrUrl = `${currentUrl}?pwd=${APP_PASSWORD}${autoIdParams}`;
+                const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}&color=703a2c&bgcolor=ffffff`;
+                document.getElementById('auth-qr-image').src = qrImgSrc;
+            }
+        };
+
+        function verifyPassword() {
+            const pwd = document.getElementById('auth-password').value;
+            if (pwd === APP_PASSWORD) {
+                loginSuccess();
+            } else {
+                showToast('密碼不正確', 'error');
+            }
+        }
+
+        let html5QrCode;
+        let isScanning = false;
+        
+        function toggleQRScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+
+            if (isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('qr-reader').classList.add('hidden');
+                    document.getElementById('qr-btn').innerHTML = '<i class="fa-solid fa-qrcode mr-2 text-lg"></i> 開啟相機掃描 QR Code';
+                }).catch(err => console.error(err));
+            } else {
+                document.getElementById('qr-reader').classList.remove('hidden');
+                document.getElementById('qr-btn').innerHTML = '<i class="fa-solid fa-times mr-2 text-lg"></i> 取消掃描';
+                
+                html5QrCode.start(
+                    { facingMode: "environment" }, // 使用手機後置鏡頭
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (decodedText) => {
+                        // 當掃描到的內容等於設定的密碼
+                        if (decodedText.trim() === APP_PASSWORD) {
+                            html5QrCode.stop().then(() => {
+                                isScanning = false;
+                                loginSuccess();
+                            });
+                        } else {
+                            showToast('無效的授權 QR Code', 'error');
+                        }
+                    },
+                    (errorMessage) => {
+                        // 背景掃描錯誤不顯示，避免洗頻
+                    }
+                ).then(() => {
+                    isScanning = true;
+                }).catch((err) => {
+                    showToast('無法存取相機，請確認權限', 'error');
+                });
+            }
+        }
+
+        function loginSuccess() {
+            // 將密碼記憶在手機中
+            localStorage.setItem('coffee_auth', APP_PASSWORD);
+            document.getElementById('auth-overlay').style.display = 'none';
+            if (html5QrCode && html5QrCode.isScanning) html5QrCode.stop();
+            
+            showToast('認證成功，歡迎回來！', 'success');
+            initializeApp();
+        }
+
+        function logoutApp() {
+            localStorage.removeItem('coffee_auth');
+            location.reload();
+        }
+
+        // ------------------ 原有主程式初始化 ------------------ //
+        function initializeApp() {
             setupAutoFilenamePreview();
             
             const params = new URLSearchParams(window.location.search);
@@ -376,7 +528,7 @@
             } else {
                 syncDrive();
             }
-        };
+        }
 
         function getTodayString() {
             const d = new Date();
@@ -401,8 +553,9 @@
         }
 
         function openSettings() {
+            // 已通過外層大門，此處設定作為第二層防護
             const pwd = prompt("進入經理室需要密碼：");
-            if (pwd === "7675300") {
+            if (pwd === APP_PASSWORD) {
                 document.getElementById('setting-folder-id').value = getFolderId();
                 document.getElementById('settings-modal').classList.remove('hidden');
                 document.getElementById('settings-modal').classList.add('flex');
@@ -667,7 +820,8 @@
 
         function confirmDeleteAction() {
             const pwd = document.getElementById('delete-password').value;
-            if (pwd !== "7675300") {
+            // 套用新密碼作為防呆
+            if (pwd !== APP_PASSWORD) {
                 showToast('密碼不正確', 'error');
                 return;
             }
@@ -734,12 +888,10 @@
             }).catch(e => console.error('下載數同步失敗', e));
         }
 
-        // 🌟 新增：產生桌面捷徑檔案的魔法
         function createShortcut(id, name) {
             const baseUrl = window.location.href.split('?')[0];
             const targetUrl = `${baseUrl}?id=${id}`;
             
-            // 建立一個安全跳轉的 HTML 作為捷徑
             const htmlContent = `<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -958,7 +1110,6 @@
                     <div class="relative z-10 flex flex-col h-full">
                         <div class="absolute -top-2 -right-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1.5 z-20">
                             <button onclick="copyShortcut('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-blue-600 hover:border-blue-200 transition flex-shrink-0" title="複製外送連結"><i class="fa-solid fa-link text-sm md:text-base"></i></button>
-                            <!-- 🌟 新增的下載桌面捷徑按鈕 -->
                             <button onclick="createShortcut('${file.id}', '${file.name}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-purple-600 hover:border-purple-200 transition flex-shrink-0" title="下載桌面捷徑"><i class="fa-solid fa-desktop text-sm md:text-base"></i></button>
                             <button onclick="downloadFile('${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-sage-600 hover:border-sage-200 transition flex-shrink-0" title="打包下載"><i class="fa-solid fa-download text-sm md:text-base"></i></button>
                             <button onclick="openModal('edit', '${file.id}')" class="w-10 h-10 bg-white/90 backdrop-blur border border-mocha-100 shadow-sm flex items-center justify-center rounded-full text-mocha-400 hover:text-mocha-700 hover:border-mocha-300 transition flex-shrink-0" title="修改配方"><i class="fa-solid fa-pen text-sm md:text-base"></i></button>
